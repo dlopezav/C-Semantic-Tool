@@ -1,0 +1,310 @@
+<template>
+  <div>
+    <!-- Form -->
+    <b-form @submit.prevent="Evaluate">
+      <b-container id="content">
+        <b-overlay :show="fields.loading" variant="secondary" spinner-variant="primary">
+          <b-row class="my-4">
+            <b-col cols="8">
+              <b-row align-h="center" align-v="center" class="mb-4">
+                <b-col class="mb-4">
+                  <h3>Código</h3>
+                </b-col>
+              </b-row>
+              <b-row align-h="center" align-v="center">
+                <b-col>
+                  <prism-editor v-model="content" :highlight="highlighter" line-numbers class="editor"></prism-editor>
+                </b-col>
+              </b-row>
+              <b-row align-h="center" align-v="center"> 
+                <b-col>
+                  <b-form-file v-model="file" type="file" accept=".cpp" placeholder="Seleciona el archivo" class="mt-4 text-left"/>
+                </b-col>
+              </b-row>
+            </b-col>
+            <b-col cols="4">
+              <b-row align-h="center" align-v="center" class="mb-4">
+                <b-col class="mb-4">
+                  <h3>Variables</h3>
+                </b-col>
+              </b-row>
+              <b-row>
+                <b-col class="mb-4">
+                  <b-button variant="primary" block v-b-modal.var-modal>Añadir variable</b-button>
+                </b-col>
+              </b-row>
+              <b-row>
+                <b-col>
+                  <div class="variables">
+                    <b-card v-for="(v, index) in vars" :key="index" class="mb-2">
+                      <b-card-title style="color: #212529;"><vue-mathjax :formula="'$$' + v.min + ' \\leq ' + v.name + ' \\leq ' + v.max + '$$'"/></b-card-title>
+                      <b-button variant="primary" size="sm" @click="vars.splice(index, 1)">Eliminar</b-button>
+                    </b-card>
+                  </div>
+                </b-col>
+              </b-row>
+            </b-col>
+          </b-row>
+          <b-row align-h="center" align-v="center">
+            <b-col cols="8">
+              <b-button block variant="primary" type="submit">Analizar código</b-button>
+            </b-col>            
+          </b-row>
+        </b-overlay>
+      </b-container>
+    </b-form>
+    <!-- Results -->
+    <b-container class="mb-5">
+      <b-row>
+        <b-col>
+          <b-row align-h="center" align-v="center" class="my-4">
+            <b-col class="mb-4">
+              <h3>Resultados</h3>
+            </b-col>
+          </b-row>
+          <b-row align-h="center" align-v="center">
+            <b-col>
+              <b-textarea readonly></b-textarea>
+            </b-col>
+          </b-row>
+        </b-col>
+      </b-row>
+    </b-container>
+
+    <!--Variable Modal-->
+    <b-modal ref="modal" id="var-modal" title="Crea una variable" no-close-on-esc hide-header-close @ok="OkCreateVariable">
+    <form ref="form" class="m-4" @submit.stop.prevent="CreateVariable">
+      <b-form-group label="Nombre de la variable" invalid-feedback="El nombre es requerido" :state="states.name">
+        <b-form-input ref="name" required placeholder="Nombre" v-model="newVar.name" :state="states.name"></b-form-input>
+      </b-form-group>
+      <b-form-group label="Valor mínimo" invalid-feedback="El mínimo es requerido" :state="states.min">
+        <b-form-input ref="min" required placeholder="Mínimo" v-model="newVar.min" :state="states.min" type="number"></b-form-input>
+      </b-form-group>
+      <b-form-group label="Valor máximo" invalid-feedback="El máximo es requerido" :state="states.max">
+        <b-form-input ref="max" required placeholder="Máximo" v-model="newVar.max" :state="states.max" type="number"></b-form-input>
+      </b-form-group>
+    </form>
+  </b-modal>
+  </div>
+</template>
+
+<script>
+
+import { PrismEditor } from 'vue-prism-editor';
+import 'vue-prism-editor/dist/prismeditor.min.css';
+import { highlight, languages } from 'prismjs/components/prism-core';
+import 'prismjs/components/prism-clike';
+import 'prismjs/components/prism-c';
+import 'prismjs/components/prism-cpp';
+import 'prismjs/themes/prism-tomorrow.css';
+
+import { VueMathjax } from 'vue-mathjax';
+
+import axios from 'axios';
+
+export default {
+  name: 'Home',
+  data(){
+      return {
+          content: "#include <iostream>\n\nint main(){\n\tstd::cout << \"Hello world!\" << std::endl;\n\treturn 0;\n}",
+          vars: new Array(),
+          file: File,
+          states: {
+            name: null,
+            min: null,
+            max: null
+          },
+          newVar: {
+            name: "",
+            min: 0,
+            max: 0
+          },
+          fields:{
+            loading: false
+          }
+      }
+  },
+  components: {
+      PrismEditor,
+      'vue-mathjax': VueMathjax
+  },
+  methods: {
+    highlighter(code) {
+      return highlight(code, languages.cpp);
+    },
+    CreateVariable(){
+      if (!this.checkFormValidity()) {
+        return;
+      }
+      this.vars.push(this.newVar);
+      this.$nextTick(() => {
+          this.$bvModal.hide('var-modal');
+      });
+    },
+    OkCreateVariable(bvModalEvt){
+      bvModalEvt.preventDefault();
+      this.CreateVariable();
+    },
+    checkFormValidity(){
+      var flag = true;
+      this.states.name = this.$refs.name.checkValidity();
+      flag &= this.states.name;
+      this.states.min = this.$refs.min.checkValidity();
+      flag &= this.states.min;
+      this.states.max = this.$refs.max.checkValidity();
+      flag &= this.states.max;
+      return flag;
+    },
+    Evaluate(){
+      var self = this;
+      this.fields.loading = true;
+      var request = {
+        "code": this.content,
+        "variables": this.vars 
+      }
+      axios.post('http://localhost:8080/evaluate', request)
+        .then(function(response){
+          let semanticErrors = response.data;
+          if(semanticErrors.length > 0){
+            // Mostrar Errores Semánticos
+          }else{
+            // Mostrar No hay Errores Semáticos
+          }
+          self.fields.loading = false;
+        }).catch(function(error){
+          if(error.response.status == '400'){
+            // Hay Errores sintácticos.
+            /*var errors = error.response.data;
+            errors.forEach(element => {
+              var item = {
+                row: element.row,
+                col: element.col,
+                message: element.message
+              }
+            });*/
+          }else if(error.response){
+            // Hay Error interno en el servidor.
+          }else if(error.request){
+            // El servidor no ha respondido.
+          }
+          self.fields.loading = false;
+        }
+      );
+    }
+  },
+  created(){
+    this.vars.push({
+      name: "A",
+      min: 1,
+      max: 2
+    });
+    this.vars.push({
+      name: "B",
+      min: 3,
+      max: 4
+    });
+    this.vars.push({
+      name: "C",
+      min: 5,
+      max: 6
+    });
+    this.vars.push({
+      name: "D",
+      min: 7,
+      max: 8
+    });
+    this.vars.push({
+      name: "E",
+      min: 9,
+      max: 10
+    });
+    this.vars.push({
+      name: "F",
+      min: 11,
+      max: 12
+    });
+    console.log(this.vars);
+  },
+  watch: {
+    file(newfile, oldfile){
+      if(newfile !== oldfile){
+        const reader = new FileReader();
+        reader.onload = e => this.content = e.target.result;
+        reader.readAsText(newfile);
+      }else{
+        console.log(newfile);
+      }
+    }
+  }
+}
+
+</script>
+
+<style>
+.navbar{
+    margin: 2em;
+    white-space: pre;
+}
+.navbar .navbar-nav .nav-link {
+    letter-spacing: 0.5px;
+    padding-right: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+#top {
+      background:  #004871;
+      padding: 1rem;
+      color: white;
+  }
+  #top p {
+      text-align: center;
+      padding-left: 1rem;
+      padding-right: 1rem;
+      padding-top: 1rem;
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+  }
+  #bottom {
+      background: rgb(0, 0, 0);
+      color: white;
+      padding: 1rem;
+  }
+  #bottom a{
+      white-space: pre;
+      color: var(--secondary);
+  }
+
+  .editor {
+    background: #2d2d2d;
+    color: #ccc !important;
+    font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 5px;
+    height: 28rem;
+    overflow: scroll;
+  }
+
+  .variables {
+    overflow-y: scroll;
+    padding: 5px;
+    height: 28rem;
+  }
+
+  .modal-title{
+    color: #212529 !important;
+  }
+
+  .card {
+    border-radius: 1rem !important;
+  } 
+
+  pre{
+    color: #ccc !important;
+  }
+
+  #content{
+    height: 45rem;
+  }
+
+</style>

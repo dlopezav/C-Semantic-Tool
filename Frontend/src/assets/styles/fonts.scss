@@ -1,0 +1,28 @@
+// Importación de la fuente del resto de los elementos.
+@font-face {
+    font-family: 'jost';
+    src: url(../fonts/jost.ttf) format('truetype');
+}
+
+// Importación de la fuente de los titulos.
+@font-face {
+    font-family: 'hey-august';
+    src: url(../fonts/hey-august.ttf) format('truetype');
+}
+
+// Asignación a todos los elementos la fuente correspondiente.
+body{
+    font-family: 'jost';
+}
+
+// Asignación a las etiquetas de titulo la fuente correspondiente.
+h1, h2, h3, h4, h5, h6{
+    font-family: 'jost';
+}
+
+h1, h2, h3{
+    color: rgb(170, 170, 170);
+}
+h4, h5, h6{
+    color: white;
+}
