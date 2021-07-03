@@ -6,6 +6,13 @@ public class SemanticError {
     private ErrorType type;
     private String message;
 
+    public SemanticError(int row, int col, ErrorType type, String message) {
+        this.row = row;
+        this.col = col;
+        this.type = type;
+        this.message = message;
+    }
+
     public int getRow() {
         return this.row;
     }
@@ -38,7 +45,7 @@ public class SemanticError {
         this.message = message;
     }
 
-    private enum ErrorType{
+    public enum ErrorType{
         OVERFLOW,
         INFINITY_LOOP,
         CORE_DUMP
