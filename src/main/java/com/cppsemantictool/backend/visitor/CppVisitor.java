@@ -29,6 +29,56 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     }
 
     @Override
+    public T visitExpression(CPP14Parser.ExpressionContext ctx) {
+        return super.visitExpression(ctx);
+    }
+
+    @Override
+    public T visitAssignmentExpression(CPP14Parser.AssignmentExpressionContext ctx) {
+        return super.visitAssignmentExpression(ctx);
+    }
+
+    @Override
+    public T visitLogicalOrExpression(CPP14Parser.LogicalOrExpressionContext ctx) {
+        return super.visitLogicalOrExpression(ctx);
+    }
+
+    @Override
+    public T visitLogicalAndExpression(CPP14Parser.LogicalAndExpressionContext ctx) {
+        return super.visitLogicalAndExpression(ctx);
+    }
+
+    @Override
+    public T visitInclusiveOrExpression(CPP14Parser.InclusiveOrExpressionContext ctx) {
+        return super.visitInclusiveOrExpression(ctx);
+    }
+
+    @Override
+    public T visitExclusiveOrExpression(CPP14Parser.ExclusiveOrExpressionContext ctx) {
+        return super.visitExclusiveOrExpression(ctx);
+    }
+
+    @Override
+    public T visitAndExpression(CPP14Parser.AndExpressionContext ctx) {
+        return super.visitAndExpression(ctx);
+    }
+
+    @Override
+    public T visitEqualityExpression(CPP14Parser.EqualityExpressionContext ctx) {
+        return super.visitEqualityExpression(ctx);
+    }
+
+    @Override
+    public T visitRelationalExpression(CPP14Parser.RelationalExpressionContext ctx) {
+        return super.visitRelationalExpression(ctx);
+    }
+
+    @Override
+    public T visitShiftExpression(CPP14Parser.ShiftExpressionContext ctx) {
+        return super.visitShiftExpression(ctx);
+    }
+
+    @Override
     public T visitAdditiveExpression(CPP14Parser.AdditiveExpressionContext ctx) {
         return super.visitAdditiveExpression(ctx);
     }
@@ -81,10 +131,10 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
         }else if(ctx.unaryExpression() != null){
             if(ctx.PlusPlus() != null){
                 T element = this.visitUnaryExpression(ctx.unaryExpression());
-                //TODO: añadir 1;
+                //TODO: ++;
                 return element;
             }else if(ctx.MinusMinus() != null){
-                //TODO: disminuir 1;
+                //TODO: --;
             }else if(ctx.Sizeof() != null){
                 //TODO: T = 64 bits;
             }
@@ -98,31 +148,38 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
             return this.visitNewExpression(ctx.newExpression());
         }else if(ctx.deleteExpression() != null) {
             return this.visitDeleteExpression(ctx.deleteExpression());
+        }else{
+            throw new UnsupportedOperationException("Expresión Unitaria");
         }
-        return null;
     }
 
     @Override
     public T visitPostfixExpression(CPP14Parser.PostfixExpressionContext ctx) {
         if(ctx.primaryExpression() != null){
             return this.visitPrimaryExpression(ctx.primaryExpression());
-        }else {
-            throw new UnsupportedOperationException("Visita a PostFixException");
-            //TODO: acceso a arreglos, y elementos de objetos estructuras y apuntadores
-
+        }else if(ctx.PlusPlus() != null){
+            T element = this.visitPostfixExpression(ctx.postfixExpression());
+            //TODO: ++
+            return element;
+        }else if(ctx.MinusMinus() != null){
+            T element = this.visitPostfixExpression(ctx.postfixExpression());
+            //TODO: --
+            return element;
+        }else{
+            throw new UnsupportedOperationException("Expresión PostFix");
         }
     }
 
     @Override
     public T visitPrimaryExpression(CPP14Parser.PrimaryExpressionContext ctx) {
         if(ctx.literal() != null){
-            return this.visitLiteral(ctx.literal(0)); // Los literales deben ir solos
+            return this.visitLiteral(ctx.literal(0));
         }else if(ctx.idExpression() != null){
-            // TODO: Variables
-            throw new UnsupportedOperationException("Visita a PrimaryException");
-        }else {
-            throw new UnsupportedOperationException("Visita a PrimaryException");
-            // TODO: paréntesis, this, expresiones lambda
+            throw new UnsupportedOperationException();// TODO: Variables
+        }else if(ctx.expression() != null) {
+            return this.visitExpression(ctx.expression());
+        }else{
+            throw new UnsupportedOperationException("Expresión lambda encontrada");
         }
     }
 
