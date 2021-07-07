@@ -50,12 +50,72 @@ public class MemoryVariable {
         this.representation = representation;
     }
 
-    public byte[] getValue() {
-        return this.value;
+    public Short getValueShort() {
+        ByteBuffer bb = ByteBuffer.wrap(this.value);
+        return bb.getShort();
     }
 
-    public void setValue(byte[] value) {
-        this.value = value;
+    public Integer getValueInt() {
+        ByteBuffer bb = ByteBuffer.wrap(this.value);
+        return bb.getInt();
+    }
+
+
+    public Long getValueLong() {
+        ByteBuffer bb = ByteBuffer.wrap(this.value);
+        return bb.getLong();
+    }
+
+    public void AddOne(){
+        switch (this.memorySize){
+            case BITS_16: {
+                Short value = this.getValueShort();
+                ByteBuffer bb = ByteBuffer.allocate(2);
+                bb.putShort(++value);
+                this.value = bb.array();
+                break;
+            }
+            case BITS_32: {
+                Integer value = this.getValueInt();
+                ByteBuffer bb = ByteBuffer.allocate(4);
+                bb.putInt(++value);
+                this.value = bb.array();
+                break;
+            }
+            case BITS_64: {
+                Long value = this.getValueLong();
+                ByteBuffer bb = ByteBuffer.allocate(8);
+                bb.putLong(++value);
+                this.value = bb.array();
+                break;
+            }
+        }
+    }
+
+    public void RestOne(){
+        switch (this.memorySize){
+            case BITS_16: {
+                Short value = this.getValueShort();
+                ByteBuffer bb = ByteBuffer.allocate(2);
+                bb.putShort(--value);
+                this.value = bb.array();
+                break;
+            }
+            case BITS_32: {
+                Integer value = this.getValueInt();
+                ByteBuffer bb = ByteBuffer.allocate(4);
+                bb.putInt(--value);
+                this.value = bb.array();
+                break;
+            }
+            case BITS_64: {
+                Long value = this.getValueLong();
+                ByteBuffer bb = ByteBuffer.allocate(8);
+                bb.putLong(--value);
+                this.value = bb.array();
+                break;
+            }
+        }
     }
 
     public enum ByteSize{

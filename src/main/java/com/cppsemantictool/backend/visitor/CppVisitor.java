@@ -2,6 +2,7 @@ package com.cppsemantictool.backend.visitor;
 
 import com.cppsemantictool.backend.gen.CPP14Parser;
 import com.cppsemantictool.backend.gen.CPP14ParserBaseVisitor;
+import com.cppsemantictool.backend.model.MemoryVariable;
 import com.cppsemantictool.backend.model.SemanticError;
 import com.cppsemantictool.backend.model.Variable;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -98,7 +99,6 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                 // Módulo
                 //TODO: Verificar tipos de datos.
             }
-
         }
         return initialValue;
     }
@@ -115,10 +115,36 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
         }else{
             // Verificación del nuevo tipo de dato
             T element = this.visitCastExpression(ctx.castExpression());
-            if(ctx.theTypeId().getText().equals("int")){
-                //TODO: Cambiar el número de bits.
+            if(ctx.theTypeId().getText().equals("short int")){
+                ((MemoryVariable)(element)).setMemorySize(MemoryVariable.ByteSize.BITS_16);
+                ((MemoryVariable)(element)).setRepresentation(MemoryVariable.NumberType.INTEGER);
+            }else if(ctx.theTypeId().getText().equals("unsigned short int")){
+                ((MemoryVariable)(element)).setMemorySize(MemoryVariable.ByteSize.BITS_16);
+                ((MemoryVariable)(element)).setRepresentation(MemoryVariable.NumberType.INTEGER);
+            }else if(ctx.theTypeId().getText().equals("unsigned int")){
+                ((MemoryVariable)(element)).setMemorySize(MemoryVariable.ByteSize.BITS_32);
+                ((MemoryVariable)(element)).setRepresentation(MemoryVariable.NumberType.INTEGER);
+            }else if(ctx.theTypeId().getText().equals("int")){
+                ((MemoryVariable)(element)).setMemorySize(MemoryVariable.ByteSize.BITS_32);
+                ((MemoryVariable)(element)).setRepresentation(MemoryVariable.NumberType.INTEGER);
+            }else if(ctx.theTypeId().getText().equals("long int")){
+                ((MemoryVariable)(element)).setMemorySize(MemoryVariable.ByteSize.BITS_32);
+                ((MemoryVariable)(element)).setRepresentation(MemoryVariable.NumberType.INTEGER);
+            }else if(ctx.theTypeId().getText().equals("unsigned long")){
+                ((MemoryVariable)(element)).setMemorySize(MemoryVariable.ByteSize.BITS_32);
+                ((MemoryVariable)(element)).setRepresentation(MemoryVariable.NumberType.INTEGER);
             }else if(ctx.theTypeId().getText().equals("long long")){
-                //TODO: Cambiar el número de bits
+                ((MemoryVariable)(element)).setMemorySize(MemoryVariable.ByteSize.BITS_64);
+                ((MemoryVariable)(element)).setRepresentation(MemoryVariable.NumberType.INTEGER);
+            }else if(ctx.theTypeId().getText().equals("unsigned long long")){
+                ((MemoryVariable)(element)).setMemorySize(MemoryVariable.ByteSize.BITS_64);
+                ((MemoryVariable)(element)).setRepresentation(MemoryVariable.NumberType.INTEGER);
+            }else if(ctx.theTypeId().getText().equals("float")){
+                ((MemoryVariable)(element)).setMemorySize(MemoryVariable.ByteSize.BITS_32);
+                ((MemoryVariable)(element)).setRepresentation(MemoryVariable.NumberType.FLOATING);
+            }else if(ctx.theTypeId().getText().equals("double")){
+                ((MemoryVariable)(element)).setMemorySize(MemoryVariable.ByteSize.BITS_64);
+                ((MemoryVariable)(element)).setRepresentation(MemoryVariable.NumberType.FLOATING);
             }
             return element;
         }
@@ -131,19 +157,28 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
         }else if(ctx.unaryExpression() != null){
             if(ctx.PlusPlus() != null){
                 T element = this.visitUnaryExpression(ctx.unaryExpression());
-                //TODO: ++;
+                ((MemoryVariable)(element)).AddOne();
                 return element;
             }else if(ctx.MinusMinus() != null){
-                //TODO: --;
+                T element = this.visitUnaryExpression(ctx.unaryExpression());
+                ((MemoryVariable)(element)).RestOne();
+                return element;
             }else if(ctx.Sizeof() != null){
-                //TODO: T = 64 bits;
+                T element = this.visitUnaryExpression(ctx.unaryExpression());
+                ((MemoryVariable)(element)).setMemorySize(MemoryVariable.ByteSize.BITS_64);
+                return element;
+            }else if(ctx.unaryOperator() != null){
+                //TODO: Operadores unitarios
+                throw new UnsupportedOperationException("Expresión Unitaria");
+            }else{
+                throw new UnsupportedOperationException("Expresión Unitaria");
             }
         }else if(ctx.Sizeof() != null){
-            //TODO: T = 64 bits;
+            MemoryVariable element = new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, 0L);
+            return ((T)(new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, 0L)));
         }else if(ctx.Alignof() != null){
-            //TODO: T = 64 bits;
-        }else if(ctx.noExceptExpression() != null) {
-            return this.visitNoExceptExpression(ctx.noExceptExpression());
+            MemoryVariable element = new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, 0L);
+            return ((T)(new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, 0L)));
         }else if(ctx.newExpression() != null) {
             return this.visitNewExpression(ctx.newExpression());
         }else if(ctx.deleteExpression() != null) {
@@ -159,11 +194,11 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
             return this.visitPrimaryExpression(ctx.primaryExpression());
         }else if(ctx.PlusPlus() != null){
             T element = this.visitPostfixExpression(ctx.postfixExpression());
-            //TODO: ++
+            ((MemoryVariable)(element)).AddOne();
             return element;
         }else if(ctx.MinusMinus() != null){
             T element = this.visitPostfixExpression(ctx.postfixExpression());
-            //TODO: --
+            ((MemoryVariable)(element)).RestOne();
             return element;
         }else{
             throw new UnsupportedOperationException("Expresión PostFix");
