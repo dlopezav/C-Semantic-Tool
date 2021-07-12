@@ -227,15 +227,35 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
             if(node.getText().startsWith("0b") || node.getText().startsWith("0B")){
                 // Entero binario.
                 value = Long.parseLong(node.getText().substring(2), 2);
+                int b = Integer.MAX_VALUE;
+                if(value < b){
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
+
+                }
             }else if(node.getText().startsWith("0x") || node.getText().startsWith("0X")){
                 // Entero hexadecimal.
                 value = Long.parseLong(node.getText().substring(2), 16);
+                int b = Integer.MAX_VALUE;
+                if(value < b){
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
+
+                }
             }else if(!node.getText().equals("0") && node.getText().startsWith("0")){
                 // Entero octal.
                 value = Long.parseLong(node.getText().substring(1), 8);
+                int b = Integer.MAX_VALUE;
+                if(value < b){
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
+
+                }
             }else{
                 // Entero decimal.
                 value = Long.parseLong(node.getText());
+                int b = Integer.MAX_VALUE;
+                if(value < b){
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
+
+                }
             }
             System.out.println(value);
             if(/*value > Math.pow(2, 31) - 1 */true){
