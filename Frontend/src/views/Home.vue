@@ -46,7 +46,7 @@
             </b-col>
           </b-row>
           <b-row align-h="center" align-v="center">
-            <b-col cols="8">
+            <b-col cols="12">
               <b-button block variant="primary" type="submit">Analizar código</b-button>
             </b-col>            
           </b-row>
@@ -54,21 +54,25 @@
       </b-container>
     </b-form>
     <!-- Results -->
+    <h1>Resultados</h1>
     <b-container class="mb-5">
       <b-row>
-        <b-col>
-          <b-row align-h="center" align-v="center" class="my-4">
-            <b-col class="mb-4">
-              <h3>Resultados</h3>
-            </b-col>
-          </b-row>
-          <b-row align-h="center" align-v="center">
-            <b-col>
-              <b-textarea readonly></b-textarea>
-            </b-col>
-          </b-row>
+        <b-col  v-for="(error, index) in detectedErrors" :key="index" xl="3" md="3" sm="6" class="pr-4">
+          <b-card :title="error.type" img-width="370rm" title-text-variant="secondary">
+            <p>{{error.message}}</p>
+            <b-row>
+              <b-col md="6" sm="6">
+              <p> <strong>Fila:</strong>  {{error.row}}</p>
+              </b-col>
+              <b-col md="6" sm="6">
+              <p> <strong>Columna:</strong>  {{error.col}}</p>
+              </b-col>
+            </b-row>
+            
+          </b-card>
         </b-col>
       </b-row>
+          
     </b-container>
 
     <!--Variable Modal-->
@@ -121,7 +125,16 @@ export default {
           },
           fields:{
             loading: false
-          }
+          },
+          detectedErrors: [
+            {
+              row: 1,
+              col: 14,
+              type: 'Overflow',
+              message: "There's probably an Overflow error!"
+            }
+          ]
+          
       }
   },
   components: {
@@ -297,6 +310,11 @@ export default {
 
   .card {
     border-radius: 1rem !important;
+    color: black;
+  } 
+
+  .card-title {
+    color: black;
   } 
 
   pre{
@@ -305,6 +323,11 @@ export default {
 
   #content{
     height: 45rem;
+    font-family: 'Dosis', sans-serif;
   }
-
+  .modal-dialog > .modal-content{
+  background-color: #ffffff !important;
+  color: black;
+  border-radius: 20px;
+}
 </style>

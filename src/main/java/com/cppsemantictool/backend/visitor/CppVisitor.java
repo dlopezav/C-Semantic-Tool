@@ -221,43 +221,45 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitLiteral(CPP14Parser.LiteralContext ctx) {
+        int maxInt = Integer.MAX_VALUE;
+        long maxLong = Long.MAX_VALUE;
         if(ctx.IntegerLiteral() != null){
             TerminalNode node = ctx.IntegerLiteral();
-            long value;
+            Long value;
             if(node.getText().startsWith("0b") || node.getText().startsWith("0B")){
                 // Entero binario.
                 value = Long.parseLong(node.getText().substring(2), 2);
-                int b = Integer.MAX_VALUE;
-                if(value < b){
-                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
 
-                }
             }else if(node.getText().startsWith("0x") || node.getText().startsWith("0X")){
                 // Entero hexadecimal.
                 value = Long.parseLong(node.getText().substring(2), 16);
-                int b = Integer.MAX_VALUE;
-                if(value < b){
-                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
 
-                }
             }else if(!node.getText().equals("0") && node.getText().startsWith("0")){
                 // Entero octal.
                 value = Long.parseLong(node.getText().substring(1), 8);
-                int b = Integer.MAX_VALUE;
-                if(value < b){
-                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
 
-                }
             }else{
                 // Entero decimal.
                 value = Long.parseLong(node.getText());
-                int b = Integer.MAX_VALUE;
-                if(value < b){
-                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
 
-                }
             }
-            System.out.println(value);
+
+            if(node.getText().endsWith("LL")){
+
+                if(value > maxLong){
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
+                }else{
+                    return ((T)(new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, value)));
+                }
+
+            }else if(value > maxInt){
+
+                this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
+
+            }else{
+                return ((T)(new MemoryVariable(MemoryVariable.ByteSize.BITS_32, MemoryVariable.NumberType.INTEGER, value.intValue())));
+            }
+
             if(/*value > Math.pow(2, 31) - 1 */true){
                 // ERROR! OVERFLOW
                 this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
