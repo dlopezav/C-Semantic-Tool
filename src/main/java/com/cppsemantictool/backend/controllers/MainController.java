@@ -10,6 +10,7 @@ import com.cppsemantictool.backend.visitor.CppVisitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,12 +23,13 @@ import java.util.List;
 @RestController
 public class MainController {
     @PostMapping(value = "/evaluate")
-    public ResponseEntity<Object> controller(@RequestBody EvaluateModel body){
+    public HttpEntity<? extends List<? extends Object>> controller(@RequestBody EvaluateModel body){
         CommonTokenStream tokens = new CommonTokenStream(new CPP14Lexer(CharStreams.fromString(body.getCode())));
         CPP14Parser parser = new CPP14Parser(tokens);
         SyntaxErrorListener listener = new SyntaxErrorListener();
         parser.addErrorListener(listener);
-        ParseTree tree = parser.translationUnit();
+        //ParseTree tree = parser.translationUnit();
+        ParseTree tree = parser.literal();
         if(parser.getNumberOfSyntaxErrors() > 0){
             List<SyntaxErrorResponse> errors = new ArrayList<>();
             for (SyntaxError error : listener.getSyntaxErrors()) {

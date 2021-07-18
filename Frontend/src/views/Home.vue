@@ -56,8 +56,8 @@
     <!-- Results -->
     <h1>Resultados</h1>
     <b-container class="mb-5">
-      <b-row>
-        <b-col  v-for="(error, index) in detectedErrors" :key="index" xl="3" md="3" sm="6" class="pr-4">
+      <b-row v-if="detectedErrors">
+        <b-col v-for="(error, index) in detectedErrors" :key="index" xl="3" md="3" sm="6" class="pr-4">
           <b-card :title="error.type" img-width="370rm" title-text-variant="secondary">
             <p>{{error.message}}</p>
             <b-row>
@@ -126,15 +126,7 @@ export default {
           fields:{
             loading: false
           },
-          detectedErrors: [
-            {
-              row: 1,
-              col: 14,
-              type: 'Overflow',
-              message: "There's probably an Overflow error!"
-            }
-          ]
-          
+          detectedErrors: []
       }
   },
   components: {
@@ -175,13 +167,17 @@ export default {
         "code": this.content,
         "variables": this.vars 
       }
-      axios.post('http://localhost:8080/evaluate', request)
+      this.detectedErrors = [];
+      axios.post('http://localhost:9000/evaluate', request)
         .then(function(response){
           let semanticErrors = response.data;
           if(semanticErrors.length > 0){
             // Mostrar Errores Semánticos
+            console.log(semanticErrors);
+            self.detectedErrors = semanticErrors;
           }else{
             // Mostrar No hay Errores Semáticos
+            console.log("No hay errores semánticos");
           }
           self.fields.loading = false;
         }).catch(function(error){

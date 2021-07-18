@@ -169,6 +169,12 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                 return element;
             }else if(ctx.unaryOperator() != null){
                 //TODO: Operadores unitarios
+                if(ctx.unaryOperator().getText().equals("-")){
+
+
+
+
+                }
                 throw new UnsupportedOperationException("Expresión Unitaria");
             }else{
                 throw new UnsupportedOperationException("Expresión Unitaria");
@@ -221,51 +227,59 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitLiteral(CPP14Parser.LiteralContext ctx) {
-        int maxInt = Integer.MAX_VALUE;
-        long maxLong = Long.MAX_VALUE;
         if(ctx.IntegerLiteral() != null){
             TerminalNode node = ctx.IntegerLiteral();
-            Long value;
+            long value = 0L;
+            int base;
+            int prefix;
+            boolean isLong = node.getText().endsWith("LL") || node.getText().endsWith("ll");
             if(node.getText().startsWith("0b") || node.getText().startsWith("0B")){
-                // Entero binario.
-                value = Long.parseLong(node.getText().substring(2), 2);
-
+                base = 2;
+                prefix = 2;
             }else if(node.getText().startsWith("0x") || node.getText().startsWith("0X")){
-                // Entero hexadecimal.
-                value = Long.parseLong(node.getText().substring(2), 16);
-
+                base = 16;
+                prefix = 2;
             }else if(!node.getText().equals("0") && node.getText().startsWith("0")){
-                // Entero octal.
-                value = Long.parseLong(node.getText().substring(1), 8);
-
+                base = 8;
+                prefix = 1;
             }else{
-                // Entero decimal.
-                value = Long.parseLong(node.getText());
-
+                base = 10;
+                prefix = 0;
             }
-
-            if(node.getText().endsWith("LL")){
-
-                if(value > maxLong){
-                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
-                }else{
-                    return ((T)(new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, value)));
+            if(isLong){
+                try{
+                    value = Long.parseLong(node.getText().substring(prefix, node.getText().length() - 2), base);
+                }catch(Exception e){
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
                 }
-
-            }else if(value > maxInt){
-
-                this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
-
-            }else{
-                return ((T)(new MemoryVariable(MemoryVariable.ByteSize.BITS_32, MemoryVariable.NumberType.INTEGER, value.intValue())));
-            }
-
-            if(/*value > Math.pow(2, 31) - 1 */true){
-                // ERROR! OVERFLOW
-                this.detectedErrors.add(new SemanticError(node.getSymbol().getLine() ,node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Riesgo de overflow"));
+                return (T) (new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, value));
+            }else {
+                try {
+                    value = (long) Integer.parseInt(node.getText().substring(prefix), base);
+                } catch (Exception e) {
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
+                }
+                return (T) (new MemoryVariable(MemoryVariable.ByteSize.BITS_32, MemoryVariable.NumberType.INTEGER, value));
             }
         }else if(ctx.FloatingLiteral() != null){
-
+            TerminalNode node = ctx.FloatingLiteral();
+            Double value = 0.0;
+            boolean isFloat = node.getText().endsWith("f") || node.getText().endsWith("F");
+            if(isFloat){
+                try{
+                    value = (double) Float.parseFloat(node.getText().substring(0, node.getText().length() - 1));
+                }catch(Exception e){
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
+                }
+                return (T) (new MemoryVariable(MemoryVariable.ByteSize.BITS_32, MemoryVariable.NumberType.FLOATING, Double.doubleToLongBits(value)));
+            }else{
+                try{
+                    value = Double.parseDouble(node.getText());
+                }catch(Exception e){
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
+                }
+                return (T) (new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.FLOATING, Double.doubleToLongBits(value)));
+            }
         }
         return null;
     }
