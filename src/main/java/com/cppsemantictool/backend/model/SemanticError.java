@@ -48,6 +48,7 @@ public class SemanticError {
     public enum ErrorType{
         OVERFLOW,
         INFINITY_LOOP,
-        CORE_DUMP
+        CORE_DUMP,
+        CASTING
     }
 }

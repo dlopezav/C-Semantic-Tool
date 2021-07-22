@@ -8,6 +8,7 @@ import com.cppsemantictool.backend.model.Variable;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
@@ -81,26 +82,56 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitAdditiveExpression(CPP14Parser.AdditiveExpressionContext ctx) {
+        MemoryVariable initialValue = (MemoryVariable) this.visitMultiplicativeExpression(ctx.multiplicativeExpression(0));
+        if(initialValue == null){
+            return null;
+        }
+        for(int i = 1; i < ctx.multiplicativeExpression().size(); i++) {
+            MemoryVariable otherValue = (MemoryVariable) this.visitMultiplicativeExpression(ctx.multiplicativeExpression(i));
+            if(otherValue == null){
+                return null;
+            }
+            if(ctx.getChild(2 * i - 1).getText().equals("+")) {
+                //TODO: Overflow
+            }else if(ctx.getChild(2 * i - 1).getText().equals("-")){
+                //TODO: overflow
+            }
+        }
         return super.visitAdditiveExpression(ctx);
     }
 
     @Override
     public T visitMultiplicativeExpression(CPP14Parser.MultiplicativeExpressionContext ctx) {
-        T initialValue = this.visitPointerMemberExpression(ctx.pointerMemberExpression(0));
-        for(int i = 1; i < ctx.getChildCount(); i += 2){
-            T otherValue = this.visitPointerMemberExpression(ctx.pointerMemberExpression(i + 1));
-            if(ctx.getChild(i).getText().equals("*")) {
-                // Multiplicación
-                // TODO: Probar si la division es igual al producto segun sea el tipo de dato.
-            }else if(ctx.getChild(i).getText().equals("/")){
-                // Division
-                // TODO: Perdida de información segun los tipos de datos
-            }else if(ctx.getChild(i).getText().equals("%")){
-                // Módulo
-                //TODO: Verificar tipos de datos.
+        MemoryVariable initialValue = (MemoryVariable) this.visitPointerMemberExpression(ctx.pointerMemberExpression(0));
+        if(initialValue == null){
+            return null;
+        }
+        for(int i = 1; i < ctx.pointerMemberExpression().size(); i++){
+            MemoryVariable otherValue = (MemoryVariable) this.visitPointerMemberExpression(ctx.pointerMemberExpression(i));
+            if(otherValue == null){
+                return null;
+            }
+            if(ctx.getChild(2 * i - 1).getText().equals("*")) {
+                MemoryVariable product = MemoryVariable.Multiply(initialValue, otherValue);
+                MemoryVariable division = MemoryVariable.Divide(product, initialValue);
+                if(!Arrays.equals(division.getArray(), otherValue.getArray())){
+                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Este producto es demasiado grande para su tipo de dato."));
+                    return null;
+                }
+                initialValue = product;
+            }else if(ctx.getChild(2 * i - 1).getText().equals("/")){
+                if(initialValue.getRepresentation() == MemoryVariable.NumberType.INTEGER && otherValue.getRepresentation() == MemoryVariable.NumberType.INTEGER){
+                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getStartIndex(), SemanticError.ErrorType.CASTING, "Esta división es entera, revisa no perder decimales."));
+                }
+                MemoryVariable division = MemoryVariable.Divide(initialValue, otherValue);
+                initialValue = division;
+            }else if(ctx.getChild(2 * i - 1).getText().equals("%")){
+                if(initialValue.getRepresentation() != MemoryVariable.NumberType.INTEGER || otherValue.getRepresentation() != MemoryVariable.NumberType.INTEGER){
+                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getStartIndex(), SemanticError.ErrorType.CASTING, "La operación módulo debe realizarse entre dos números enteros."));
+                }
             }
         }
-        return initialValue;
+        return (T) initialValue;
     }
 
     @Override
@@ -180,11 +211,11 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                 throw new UnsupportedOperationException("Expresión Unitaria");
             }
         }else if(ctx.Sizeof() != null){
-            MemoryVariable element = new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, 0L);
-            return ((T)(new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, 0L)));
+            //MemoryVariable element = new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, 0L);
+            //return ((T)(new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, 0L)));
         }else if(ctx.Alignof() != null){
-            MemoryVariable element = new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, 0L);
-            return ((T)(new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, 0L)));
+            //MemoryVariable element = new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, 0L);
+            //return ((T)(new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, 0L)));
         }else if(ctx.newExpression() != null) {
             return this.visitNewExpression(ctx.newExpression());
         }else if(ctx.deleteExpression() != null) {
@@ -192,6 +223,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
         }else{
             throw new UnsupportedOperationException("Expresión Unitaria");
         }
+        return null;
     }
 
     @Override
@@ -224,61 +256,55 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
         }
     }
 
-
     @Override
     public T visitLiteral(CPP14Parser.LiteralContext ctx) {
         if(ctx.IntegerLiteral() != null){
             TerminalNode node = ctx.IntegerLiteral();
-            long value = 0L;
             int base;
             int prefix;
-            boolean isLong = node.getText().endsWith("LL") || node.getText().endsWith("ll");
             if(node.getText().startsWith("0b") || node.getText().startsWith("0B")){
-                base = 2;
-                prefix = 2;
+                base = 2; prefix = 2;
             }else if(node.getText().startsWith("0x") || node.getText().startsWith("0X")){
-                base = 16;
-                prefix = 2;
+                base = 16; prefix = 2;
             }else if(!node.getText().equals("0") && node.getText().startsWith("0")){
-                base = 8;
-                prefix = 1;
+                base = 8; prefix = 1;
             }else{
-                base = 10;
-                prefix = 0;
+                base = 10; prefix = 0;
             }
-            if(isLong){
+            if(node.getText().endsWith("LL") || node.getText().endsWith("ll")){
                 try{
-                    value = Long.parseLong(node.getText().substring(prefix, node.getText().length() - 2), base);
+                    Long value = Long.parseLong(node.getText().substring(prefix, node.getText().length() - 2), base);
+                    return (T) (new MemoryVariable(value));
                 }catch(Exception e){
                     this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
+                    return null;
                 }
-                return (T) (new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.INTEGER, value));
             }else {
                 try {
-                    value = (long) Integer.parseInt(node.getText().substring(prefix), base);
+                    Integer value = Integer.parseInt(node.getText().substring(prefix), base);
+                    return (T) (new MemoryVariable(value));
                 } catch (Exception e) {
                     this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
+                    return null;
                 }
-                return (T) (new MemoryVariable(MemoryVariable.ByteSize.BITS_32, MemoryVariable.NumberType.INTEGER, value));
             }
         }else if(ctx.FloatingLiteral() != null){
             TerminalNode node = ctx.FloatingLiteral();
-            Double value = 0.0;
-            boolean isFloat = node.getText().endsWith("f") || node.getText().endsWith("F");
-            if(isFloat){
+            if(node.getText().endsWith("f") || node.getText().endsWith("F")){
                 try{
-                    value = (double) Float.parseFloat(node.getText().substring(0, node.getText().length() - 1));
+                    Float value = Float.parseFloat(node.getText().substring(0, node.getText().length() - 1));
+                    return (T) (new MemoryVariable(value));
                 }catch(Exception e){
                     this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
+                    return null;
                 }
-                return (T) (new MemoryVariable(MemoryVariable.ByteSize.BITS_32, MemoryVariable.NumberType.FLOATING, Double.doubleToLongBits(value)));
             }else{
                 try{
-                    value = Double.parseDouble(node.getText());
+                    Double value = Double.parseDouble(node.getText());
+                    return (T) (new MemoryVariable(value));
                 }catch(Exception e){
                     this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
                 }
-                return (T) (new MemoryVariable(MemoryVariable.ByteSize.BITS_64, MemoryVariable.NumberType.FLOATING, Double.doubleToLongBits(value)));
             }
         }
         return null;

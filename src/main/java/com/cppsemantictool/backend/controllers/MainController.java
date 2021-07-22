@@ -29,7 +29,8 @@ public class MainController {
         SyntaxErrorListener listener = new SyntaxErrorListener();
         parser.addErrorListener(listener);
         //ParseTree tree = parser.translationUnit();
-        ParseTree tree = parser.literal();
+        //ParseTree tree = parser.literal();
+        ParseTree tree = parser.multiplicativeExpression();
         if(parser.getNumberOfSyntaxErrors() > 0){
             List<SyntaxErrorResponse> errors = new ArrayList<>();
             for (SyntaxError error : listener.getSyntaxErrors()) {
