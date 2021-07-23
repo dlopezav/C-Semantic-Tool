@@ -72,7 +72,13 @@
           </b-card>
         </b-col>
       </b-row>
-          
+      <b-row v-if="detectedErrors.length == 0 && view">
+        <b-col  :key="index" xl="12" md="12" sm="12" class="pr-4">
+          <b-card :title="'No se encontraron errores'" img-width="370rm" title-text-variant="secondary">
+            
+          </b-card>
+        </b-col>
+      </b-row>
     </b-container>
 
     <!--Variable Modal-->
@@ -81,11 +87,11 @@
       <b-form-group label="Nombre de la variable" invalid-feedback="El nombre es requerido" :state="states.name">
         <b-form-input ref="name" required placeholder="Nombre" v-model="newVar.name" :state="states.name"></b-form-input>
       </b-form-group>
-      <b-form-group label="Valor mínimo" invalid-feedback="El mínimo es requerido" :state="states.min">
-        <b-form-input ref="min" required placeholder="Mínimo" v-model="newVar.min" :state="states.min" type="number"></b-form-input>
+      <b-form-group label="Valor mínimo" invalid-feedback="El mínimo es requerido y debe ser menor al maximo" :state="states.min">
+        <b-form-input ref="min" v-bind:max="newVar.max" required placeholder="Mínimo" v-model="newVar.min" :state="states.min" type="number"></b-form-input>
       </b-form-group>
-      <b-form-group label="Valor máximo" invalid-feedback="El máximo es requerido" :state="states.max">
-        <b-form-input ref="max" required placeholder="Máximo" v-model="newVar.max" :state="states.max" type="number"></b-form-input>
+      <b-form-group label="Valor máximo" invalid-feedback="El máximo es requerido y debe ser mayor al mínimo" :state="states.max">
+        <b-form-input ref="max" v-bind:min="newVar.min" required placeholder="Máximo" v-model="newVar.max" :state="states.max" type="number"></b-form-input>
       </b-form-group>
     </form>
   </b-modal>
@@ -126,7 +132,8 @@ export default {
           fields:{
             loading: false
           },
-          detectedErrors: []
+          detectedErrors: [],
+          view: false
       }
   },
   components: {
@@ -178,8 +185,10 @@ export default {
           }else{
             // Mostrar No hay Errores Semáticos
             console.log("No hay errores semánticos");
+            
           }
           self.fields.loading = false;
+          self.view = true
         }).catch(function(error){
           if(error.response.status == '400'){
             // Hay Errores sintácticos.
