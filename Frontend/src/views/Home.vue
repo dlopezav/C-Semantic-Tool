@@ -72,9 +72,28 @@
           </b-card>
         </b-col>
       </b-row>
-      <b-row v-if="detectedErrors.length == 0 && view">
+      <b-row v-if="detectedErrors.length == 0 && view && synErrors.length == 0">
         <b-col  :key="index" xl="12" md="12" sm="12" class="pr-4">
           <b-card :title="'No se encontraron errores'" img-width="370rm" title-text-variant="secondary">
+            
+          </b-card>
+        </b-col>
+      </b-row>
+      <b-row v-if="synErrors.length!=0">
+        <h4>Se encontraron los siguientes errores en su sintáxis: </h4>
+      </b-row>
+      <b-row v-if="synErrors">
+       <b-col v-for="(error, index) in synErrors" :key="index" xl="3" md="3" sm="6" class="pr-4">
+          <b-card :title="error.type" img-width="370rm" title-text-variant="secondary">
+            <p>{{error.message}}</p>
+            <b-row>
+              <b-col md="6" sm="6">
+              <p> <strong>Fila:</strong>  {{error.row}}</p>
+              </b-col>
+              <b-col md="6" sm="6">
+              <p> <strong>Columna:</strong>  {{error.col}}</p>
+              </b-col>
+            </b-row>
             
           </b-card>
         </b-col>
@@ -133,7 +152,8 @@ export default {
             loading: false
           },
           detectedErrors: [],
-          view: false
+          view: false,
+          synErrors: []
       }
   },
   components: {
@@ -191,15 +211,7 @@ export default {
           self.view = true
         }).catch(function(error){
           if(error.response.status == '400'){
-            // Hay Errores sintácticos.
-            /*var errors = error.response.data;
-            errors.forEach(element => {
-              var item = {
-                row: element.row,
-                col: element.col,
-                message: element.message
-              }
-            });*/
+            self.synErrors = error.response.data;
           }else if(error.response){
             // Hay Error interno en el servidor.
           }else if(error.request){
