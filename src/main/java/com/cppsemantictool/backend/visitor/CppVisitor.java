@@ -115,20 +115,21 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                 MemoryVariable product = MemoryVariable.Multiply(initialValue, otherValue);
                 MemoryVariable division = MemoryVariable.Divide(product, initialValue);
                 if(!Arrays.equals(division.getArray(), otherValue.getArray())){
-                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "Este producto es demasiado grande para su tipo de dato."));
+                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "Este producto es demasiado grande para su tipo de dato."));
                     return null;
                 }
                 initialValue = product;
             }else if(ctx.getChild(2 * i - 1).getText().equals("/")){
                 if(initialValue.getRepresentation() == MemoryVariable.NumberType.INTEGER && otherValue.getRepresentation() == MemoryVariable.NumberType.INTEGER){
-                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getStartIndex(), SemanticError.ErrorType.CASTING, "Esta división es entera, revisa no perder decimales."));
+                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "Esta división es entera, revisa no perder decimales."));
                 }
                 MemoryVariable division = MemoryVariable.Divide(initialValue, otherValue);
                 initialValue = division;
             }else if(ctx.getChild(2 * i - 1).getText().equals("%")){
                 if(initialValue.getRepresentation() != MemoryVariable.NumberType.INTEGER || otherValue.getRepresentation() != MemoryVariable.NumberType.INTEGER){
-                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getStartIndex(), SemanticError.ErrorType.CASTING, "La operación módulo debe realizarse entre dos números enteros."));
+                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine()+ 1 , SemanticError.ErrorType.CASTING, "La operación módulo debe realizarse entre dos números enteros."));
                 }
+                //TODO: initialValue = MemoryVariable.Module(initialValue, otherValue);
             }
         }
         return (T) initialValue;
@@ -199,14 +200,58 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                 ((MemoryVariable)(element)).setMemorySize(MemoryVariable.ByteSize.BITS_64);
                 return element;
             }else if(ctx.unaryOperator() != null){
-                //TODO: Operadores unitarios
                 if(ctx.unaryOperator().getText().equals("-")){
-
-
-
-
+                    if(ctx.unaryExpression().postfixExpression().primaryExpression().literal(0).IntegerLiteral() != null){
+                        TerminalNode node = ctx.unaryExpression().postfixExpression().primaryExpression().literal(0).IntegerLiteral();
+                        int base;
+                        int prefix;
+                        if(node.getText().startsWith("0b") || node.getText().startsWith("0B")){
+                            base = 2; prefix = 2;
+                        }else if(node.getText().startsWith("0x") || node.getText().startsWith("0X")){
+                            base = 16; prefix = 2;
+                        }else if(!node.getText().equals("0") && node.getText().startsWith("0")){
+                            base = 8; prefix = 1;
+                        }else{
+                            base = 10; prefix = 0;
+                        }
+                        if(node.getText().endsWith("LL") || node.getText().endsWith("ll")){
+                            try{
+                                Long value = Long.parseLong("-" + node.getText().substring(prefix, node.getText().length() - 2), base);
+                                return (T) (new MemoryVariable(value));
+                            }catch(Exception e){
+                                this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "La constante -" + node.getText() + " es demasiado grande para su tipo."));
+                                return null;
+                            }
+                        }else {
+                            try {
+                                Integer value = Integer.parseInt("-" + node.getText().substring(prefix), base);
+                                return (T) (new MemoryVariable(value));
+                            } catch (Exception e) {
+                                this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "La constante -" + node.getText() + " es demasiado grande para su tipo."));
+                                return null;
+                            }
+                        }
+                    }else if(ctx.unaryExpression().postfixExpression().primaryExpression().literal(0) != null){
+                        TerminalNode node = ctx.unaryExpression().postfixExpression().primaryExpression().literal(0).FloatingLiteral();
+                        if(node.getText().endsWith("f") || node.getText().endsWith("F")){
+                            try{
+                                Float value = Float.parseFloat("-" + node.getText().substring(0, node.getText().length() - 1));
+                                return (T) (new MemoryVariable(value));
+                            }catch(Exception e){
+                                this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "La constante -" + node.getText() + " es demasiado grande para su tipo."));
+                                return null;
+                            }
+                        }else{
+                            try{
+                                Double value = Double.parseDouble("-" + node.getText());
+                                return (T) (new MemoryVariable(value));
+                            }catch(Exception e){
+                                this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "La constante -" + node.getText() + " es demasiado grande para su tipo."));
+                            }
+                        }
+                    }
+                    return null;
                 }
-                throw new UnsupportedOperationException("Expresión Unitaria");
             }else{
                 throw new UnsupportedOperationException("Expresión Unitaria");
             }
@@ -276,7 +321,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                     Long value = Long.parseLong(node.getText().substring(prefix, node.getText().length() - 2), base);
                     return (T) (new MemoryVariable(value));
                 }catch(Exception e){
-                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getCharPositionInLine() + 1 , SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
                     return null;
                 }
             }else {
@@ -284,7 +329,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                     Integer value = Integer.parseInt(node.getText().substring(prefix), base);
                     return (T) (new MemoryVariable(value));
                 } catch (Exception e) {
-                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
                     return null;
                 }
             }
@@ -295,7 +340,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                     Float value = Float.parseFloat(node.getText().substring(0, node.getText().length() - 1));
                     return (T) (new MemoryVariable(value));
                 }catch(Exception e){
-                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
                     return null;
                 }
             }else{
@@ -303,7 +348,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                     Double value = Double.parseDouble(node.getText());
                     return (T) (new MemoryVariable(value));
                 }catch(Exception e){
-                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getStartIndex(), SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
+                    this.detectedErrors.add(new SemanticError(node.getSymbol().getLine(), node.getSymbol().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "La constante " + node.getText() + " es demasiado grande para su tipo."));
                 }
             }
         }

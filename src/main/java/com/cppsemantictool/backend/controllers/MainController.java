@@ -28,9 +28,9 @@ public class MainController {
         CPP14Parser parser = new CPP14Parser(tokens);
         SyntaxErrorListener listener = new SyntaxErrorListener();
         parser.addErrorListener(listener);
-        //ParseTree tree = parser.translationUnit();
+        ParseTree tree = parser.translationUnit();
         //ParseTree tree = parser.literal();
-        ParseTree tree = parser.multiplicativeExpression();
+        //ParseTree tree = parser.multiplicativeExpression();
         if(parser.getNumberOfSyntaxErrors() > 0){
             List<SyntaxErrorResponse> errors = new ArrayList<>();
             for (SyntaxError error : listener.getSyntaxErrors()) {
