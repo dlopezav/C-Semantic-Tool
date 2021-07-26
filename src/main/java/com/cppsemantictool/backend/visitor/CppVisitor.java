@@ -38,14 +38,103 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     }
 
     @Override
-    public T visitSimpleDeclaration(CPP14Parser.SimpleDeclarationContext ctx) {
-        // asignaciones y declaraciones.
-        if(ctx.declSpecifierSeq() != null){
+    public T visitIterationStatement(CPP14Parser.IterationStatementContext ctx) {
+        if(ctx.Do() != null) {
+            List<CPP14Parser.StatementContext> statements = ctx.statement().compoundStatement().statementSeq().statement();
+            for (CPP14Parser.StatementContext statement : statements){
+                if(statement.labeledStatement() != null){
+                    this.visitLabeledStatement(statement.labeledStatement());
+                }else if(statement.declarationStatement() != null){
+                    this.visitDeclarationStatement(statement.declarationStatement());
+                }else if(statement.expressionStatement() != null){
+                    this.visitExpressionStatement(statement.expressionStatement());
+                }else if(statement.compoundStatement() != null){
+                    this.visitCompoundStatement(statement.compoundStatement());
+                }else if(statement.selectionStatement() != null){
+                    this.visitSelectionStatement(statement.selectionStatement());
+                }else if(statement.iterationStatement() != null){
+                    this.visitIterationStatement(statement.iterationStatement());
+                }else if(statement.jumpStatement() != null){
+                    this.visitJumpStatement(statement.jumpStatement());
+                }else if(statement.tryBlock() != null){
+                    this.visitTryBlock(statement.tryBlock());
+                }
+            }
+        }else if(ctx.While() != null){
+            List<CPP14Parser.StatementContext> statements = ctx.statement().compoundStatement().statementSeq().statement();
+            for (CPP14Parser.StatementContext statement : statements){
+                if(statement.labeledStatement() != null){
+                    this.visitLabeledStatement(statement.labeledStatement());
+                }else if(statement.declarationStatement() != null){
+                    this.visitDeclarationStatement(statement.declarationStatement());
+                }else if(statement.expressionStatement() != null){
+                    this.visitExpressionStatement(statement.expressionStatement());
+                }else if(statement.compoundStatement() != null){
+                    this.visitCompoundStatement(statement.compoundStatement());
+                }else if(statement.selectionStatement() != null){
+                    this.visitSelectionStatement(statement.selectionStatement());
+                }else if(statement.iterationStatement() != null){
+                    this.visitIterationStatement(statement.iterationStatement());
+                }else if(statement.jumpStatement() != null){
+                    this.visitJumpStatement(statement.jumpStatement());
+                }else if(statement.tryBlock() != null){
+                    this.visitTryBlock(statement.tryBlock());
+                }
+            }
+        }else if(ctx.For() != null){
+            List<CPP14Parser.StatementContext> statements = ctx.statement().compoundStatement().statementSeq().statement();
+            for (CPP14Parser.StatementContext statement : statements){
+                if(statement.labeledStatement() != null){
+                    this.visitLabeledStatement(statement.labeledStatement());
+                }else if(statement.declarationStatement() != null){
+                    this.visitDeclarationStatement(statement.declarationStatement());
+                }else if(statement.expressionStatement() != null){
+                    this.visitExpressionStatement(statement.expressionStatement());
+                }else if(statement.compoundStatement() != null){
+                    this.visitCompoundStatement(statement.compoundStatement());
+                }else if(statement.selectionStatement() != null){
+                    this.visitSelectionStatement(statement.selectionStatement());
+                }else if(statement.iterationStatement() != null){
+                    this.visitIterationStatement(statement.iterationStatement());
+                }else if(statement.jumpStatement() != null){
+                    this.visitJumpStatement(statement.jumpStatement());
+                }else if(statement.tryBlock() != null){
+                    this.visitTryBlock(statement.tryBlock());
+                }
+            }
+        }
+        return null;
+    }
 
+    @Override
+    public T visitSimpleDeclaration(CPP14Parser.SimpleDeclarationContext ctx) {
+        String type = null;
+        if(ctx.declSpecifierSeq() != null){
+            type = ctx.declSpecifierSeq().getText();
+            /*if(type.equals("short int") || type.equals("short")){
+                //variable = new MemoryVariable();
+            }else if(type.equals("int") || type.equals("long") || type.equals("long int")){
+                
+            }else if(type.equals("long long")){
+
+            }else if(type.equals("float")){
+
+            }else if(type.equals("double")){
+                
+            }*/
         }
         if(ctx.initDeclaratorList() != null){
+            List<CPP14Parser.InitDeclaratorContext> vars = ctx.initDeclaratorList().initDeclarator();
+            for(CPP14Parser.InitDeclaratorContext var : vars){
+                if(type == null){
+                    var.declarator(); // este retornaría el nombre de la variable
+                    var.initializer(); // Este retornaría el memoryvariable
+                }else{
+                    this.variables.put(type, new Pair<>(new MemoryVariable(0), new MemoryVariable(0)));
+                }
+            }
 
-        }
+        } //TODO: Errores de casting en asignaciones y declaraciones tipos diferentes detectados
         return null;
     }
 
