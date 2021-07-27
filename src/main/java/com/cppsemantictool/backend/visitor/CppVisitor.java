@@ -82,6 +82,23 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                 }
             }
         }else if(ctx.For() != null){
+            try{
+                this.visitForInitStatement(ctx.forInitStatement());
+
+                String condition = ctx.condition().getText();
+                String ands[] = condition.trim().split("&&");
+                for(String and : ands){
+                    String ors[] = and.trim().split("\\|\\|");
+                }
+
+
+
+                String expression = ctx.expression().getText();
+
+
+                //TODO: evaluar si el ciclo tiene fin
+            }catch(Exception e){ }
+
             List<CPP14Parser.StatementContext> statements = ctx.statement().compoundStatement().statementSeq().statement();
             for (CPP14Parser.StatementContext statement : statements){
                 if(statement.labeledStatement() != null){
@@ -107,6 +124,11 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     }
 
     @Override
+    public T visitForInitStatement(CPP14Parser.ForInitStatementContext ctx) {
+        return super.visitForInitStatement(ctx);
+    }
+
+    @Override
     public T visitSimpleDeclaration(CPP14Parser.SimpleDeclarationContext ctx) {
         String type = null;
         if(ctx.declSpecifierSeq() != null){
@@ -122,13 +144,15 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
             }else if(type.equals("double")){
                 
             }*/
+
+            int a = 2, b = 3;
         }
         if(ctx.initDeclaratorList() != null){
             List<CPP14Parser.InitDeclaratorContext> vars = ctx.initDeclaratorList().initDeclarator();
             for(CPP14Parser.InitDeclaratorContext var : vars){
                 if(type == null){
                     var.declarator(); // este retornaría el nombre de la variable
-                    var.initializer(); // Este retornaría el memoryvariable
+                    MemoryVariable value = (MemoryVariable) this.visitInitializer(var.initializer()); // Este retornaría el memoryvariable
                 }else{
                     this.variables.put(type, new Pair<>(new MemoryVariable(0), new MemoryVariable(0)));
                 }
@@ -139,55 +163,69 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     }
 
     @Override
+    public T visitInitializer(CPP14Parser.InitializerContext ctx) {
+        return this.visitBraceOrEqualInitializer(ctx.braceOrEqualInitializer());
+    }
+
+    @Override
+    public T visitBraceOrEqualInitializer(CPP14Parser.BraceOrEqualInitializerContext ctx) {
+        return this.visitInitializerClause(ctx.initializerClause());
+    }
+
+    @Override
+    public T visitInitializerClause(CPP14Parser.InitializerClauseContext ctx) {
+        return this.visitAssignmentExpression(ctx.assignmentExpression());
+    }
+
+    @Override
     public T visitAssignmentExpression(CPP14Parser.AssignmentExpressionContext ctx) {
-        return super.visitAssignmentExpression(ctx);
+        return visitConditionalExpression(ctx.conditionalExpression());
     }
 
     @Override
     public T visitConditionalExpression(CPP14Parser.ConditionalExpressionContext ctx) {
-        // Expresión Lambda
-        return super.visitConditionalExpression(ctx);
+        return this.visitLogicalOrExpression(ctx.logicalOrExpression()); // Expresión ternaria
     }
 
     @Override
     public T visitLogicalOrExpression(CPP14Parser.LogicalOrExpressionContext ctx) {
-        return super.visitLogicalOrExpression(ctx);
+        return this.visitLogicalAndExpression(ctx.logicalAndExpression(0));
     }
 
     @Override
     public T visitLogicalAndExpression(CPP14Parser.LogicalAndExpressionContext ctx) {
-        return super.visitLogicalAndExpression(ctx);
+        return this.visitInclusiveOrExpression(ctx.inclusiveOrExpression(0));
     }
 
     @Override
     public T visitInclusiveOrExpression(CPP14Parser.InclusiveOrExpressionContext ctx) {
-        return super.visitInclusiveOrExpression(ctx);
+        return this.visitExclusiveOrExpression(ctx.exclusiveOrExpression(0));
     }
 
     @Override
     public T visitExclusiveOrExpression(CPP14Parser.ExclusiveOrExpressionContext ctx) {
-        return super.visitExclusiveOrExpression(ctx);
+        return this.visitAndExpression(ctx.andExpression(0));
     }
 
     @Override
     public T visitAndExpression(CPP14Parser.AndExpressionContext ctx) {
-        return super.visitAndExpression(ctx);
+        return this.visitEqualityExpression(ctx.equalityExpression(0));
     }
 
     @Override
     public T visitEqualityExpression(CPP14Parser.EqualityExpressionContext ctx) {
-        return super.visitEqualityExpression(ctx);
+        return this.visitRelationalExpression(ctx.relationalExpression(0));
     }
 
     @Override
     public T visitRelationalExpression(CPP14Parser.RelationalExpressionContext ctx) {
-        return super.visitRelationalExpression(ctx);
+        return this.visitShiftExpression(ctx.shiftExpression(0));
     }
 
     @Override
     public T visitShiftExpression(CPP14Parser.ShiftExpressionContext ctx) {
+        return this.visitAdditiveExpression(ctx.additiveExpression().get(0));
         //cin, cout;
-        return super.visitShiftExpression(ctx);
     }
 
     @Override

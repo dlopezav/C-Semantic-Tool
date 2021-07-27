@@ -401,7 +401,7 @@ elaboratedTypeSpecifier:
 	)
 	| Enum nestedNameSpecifier? Identifier;
 
-enumName: Identifier;
+enumName: Identifiinitializerer;
 
 enumSpecifier:
 	enumHead LeftBrace (enumeratorList Comma?)? RightBrace;
