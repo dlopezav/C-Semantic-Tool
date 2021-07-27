@@ -1,4 +1,4 @@
-// Generated from /run/media/ricardo/Hard drive/Documents/Subjects/Lenguajes de programación/CppSemanticTool/src/main/java/com/cppsemantictool/backend/grammar/CPP14Lexer.g4 by ANTLR 4.9.1
+// Generated from C:/Users/dfeli/OneDrive/Documents/Materias 2021-1/Lenguajes/CPP-Semantic-Tool/src/main/java/com/cppsemantictool/backend/grammar\CPP14Lexer.g4 by ANTLR 4.9.1
 package com.cppsemantictool.backend.grammar;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
