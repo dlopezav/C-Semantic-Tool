@@ -180,26 +180,26 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     @Override
     public T visitDeclarator(CPP14Parser.DeclaratorContext ctx) {
         String a= ctx.pointerDeclarator().getText();
-        return super.visitPointerDeclarator(ctx.pointerDeclarator());
+        return this.visitPointerDeclarator(ctx.pointerDeclarator());
     }
 
     @Override
     public T visitPointerDeclarator(CPP14Parser.PointerDeclaratorContext ctx) {
         String a= ctx.noPointerDeclarator().getText();
-        return super.visitNoPointerDeclarator(ctx.noPointerDeclarator());
+        return this.visitNoPointerDeclarator(ctx.noPointerDeclarator());
     }
 
     @Override
     public T visitNoPointerDeclarator(CPP14Parser.NoPointerDeclaratorContext ctx) {
         if(ctx.declaratorid()!=null) {
-            return super.visitDeclaratorid(ctx.declaratorid());
+            return this.visitDeclaratorid(ctx.declaratorid());
         }
         return null;
     }
 
     @Override
     public T visitDeclaratorid(CPP14Parser.DeclaratoridContext ctx) {
-        return super.visitIdExpression(ctx.idExpression());
+        return this.visitIdExpression(ctx.idExpression());
     }
 
     @Override
@@ -219,7 +219,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitAssignmentExpression(CPP14Parser.AssignmentExpressionContext ctx) {
-        return visitConditionalExpression(ctx.conditionalExpression());
+        return this.visitConditionalExpression(ctx.conditionalExpression());
     }
 
     @Override
