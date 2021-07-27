@@ -72,14 +72,14 @@
           </b-card>
         </b-col>
       </b-row>
-      <b-row v-if="detectedErrors.length == 0 && view && synErrors.length == 0">
+      <b-row v-if="detectedErrors.length === 0 && view && synErrors.length === 0">
         <b-col  :key="index" xl="12" md="12" sm="12" class="pr-4">
           <b-card :title="'No se encontraron errores'" img-width="370rm" title-text-variant="secondary">
             
           </b-card>
         </b-col>
       </b-row>
-      <b-row v-if="synErrors.length!=0">
+      <b-row v-if="synErrors.length !== 0">
         <h4>Se encontraron los siguientes errores en su sintáxis: </h4>
       </b-row>
       <b-row v-if="synErrors">
@@ -136,7 +136,7 @@ export default {
   data(){
       return {
           content: "#include <iostream>\n\nint main(){\n\tstd::cout << \"Hello world!\" << std::endl;\n\treturn 0;\n}",
-          vars: new Array(),
+          vars: [],
           file: File,
           states: {
             name: null,
@@ -178,7 +178,7 @@ export default {
       this.CreateVariable();
     },
     checkFormValidity(){
-      var flag = true;
+      let flag = true;
       this.states.name = this.$refs.name.checkValidity();
       flag &= this.states.name;
       this.states.min = this.$refs.min.checkValidity();
@@ -188,14 +188,14 @@ export default {
       return flag;
     },
     Evaluate(){
-      var self = this;
+      const self = this;
       this.fields.loading = true;
-      var request = {
+      const request = {
         "code": this.content,
-        "variables": this.vars 
-      }
+        "variables": this.vars
+      };
       this.detectedErrors = [];
-      axios.post('http://localhost:9000/evaluate', request)
+      axios.post('https://cpp-semantic-tool.azurewebsites.net/evaluate', request)
         .then(function(response){
           let semanticErrors = response.data;
           if(semanticErrors.length > 0){
@@ -223,7 +223,7 @@ export default {
     }
   },
   created(){
-    this.vars.push({
+    /*this.vars.push({
       name: "A",
       min: 1,
       max: 2
@@ -253,7 +253,7 @@ export default {
       min: 11,
       max: 12
     });
-    console.log(this.vars);
+    console.log(this.vars);*/
   },
   watch: {
     file(newfile, oldfile){

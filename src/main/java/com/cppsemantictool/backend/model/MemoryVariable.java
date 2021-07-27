@@ -1413,9 +1413,46 @@ public class MemoryVariable {
         return c;
     }
 
-    public static boolean GreaterOverflow(MemoryVariable a, MemoryVariable b){
+    public static MemoryVariable AdditiveInverse(MemoryVariable a){
+        MemoryVariable b = null;
+        switch (a.representation) {
+            case INTEGER: {
+                switch (a.memorySize){
+                    case BITS_16: {
+                        b = new MemoryVariable(-a.getValueShort());
+                        break;
+                    }
+                    case BITS_32: {
+                        b = new MemoryVariable(-a.getValueInt());
+                        break;
+                    }
+                    case BITS_64: {
+                        MemoryVariable v = new MemoryVariable(-a.getValueLong());
+                        break;
+                    }
+                }
+                break;
+            }
+            case FLOATING: {
+                switch (a.memorySize){
+                    case BITS_32: {
+                        MemoryVariable v = new MemoryVariable(-a.getValueFloat());
+                        break;
+                    }
+                    case BITS_64: {
+                        MemoryVariable v = new MemoryVariable(-a.getValueDouble());
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        return b;
+    }
+
+    public static boolean GreaterOverflow(MemoryVariable b, MemoryVariable a){
         boolean greater = false;
-        switch (a.getRepresentation()){
+        switch (b.getRepresentation()){
             case INTEGER: {
                 switch (a.getMemorySize()){
                     case BITS_16: {
@@ -1608,7 +1645,7 @@ public class MemoryVariable {
         return greater;
     }
 
-    public static boolean LowerOverflow(MemoryVariable a, MemoryVariable b){
+    public static boolean LowerOverflow(MemoryVariable b, MemoryVariable a){
         boolean lower = false;
         switch (a.getRepresentation()){
             case INTEGER: {
@@ -1619,15 +1656,15 @@ public class MemoryVariable {
                             case INTEGER: {
                                 switch (b.getMemorySize()) {
                                     case BITS_16: {
-                                        lower = s < (Short.MAX_VALUE - b.getValueShort());
+                                        lower = s < (Short.MIN_VALUE - b.getValueShort());
                                         break;
                                     }
                                     case BITS_32: {
-                                        lower = s < (Integer.MAX_VALUE - b.getValueInt());
+                                        lower = s < (Integer.MIN_VALUE - b.getValueInt());
                                         break;
                                     }
                                     case BITS_64: {
-                                        lower = s < (Long.MAX_VALUE - b.getValueLong());
+                                        lower = s < (Long.MIN_VALUE - b.getValueLong());
                                         break;
                                     }
                                 }
@@ -1636,11 +1673,11 @@ public class MemoryVariable {
                             case FLOATING: {
                                 switch (b.getMemorySize()){
                                     case BITS_32: {
-                                        lower = s < (Float.MAX_VALUE - b.getValueFloat());
+                                        lower = s < (Float.MIN_VALUE - b.getValueFloat());
                                         break;
                                     }
                                     case BITS_64: {
-                                        lower = s < (Double.MAX_VALUE - b.getValueDouble());
+                                        lower = s < (Double.MIN_VALUE - b.getValueDouble());
                                         break;
                                     }
                                 }
@@ -1654,15 +1691,15 @@ public class MemoryVariable {
                             case INTEGER: {
                                 switch (b.getMemorySize()) {
                                     case BITS_16: {
-                                        lower = i < (Integer.MAX_VALUE - b.getValueShort());
+                                        lower = i < (Integer.MIN_VALUE - b.getValueShort());
                                         break;
                                     }
                                     case BITS_32: {
-                                        lower = i < (Integer.MAX_VALUE - b.getValueInt());
+                                        lower = i < (Integer.MIN_VALUE - b.getValueInt());
                                         break;
                                     }
                                     case BITS_64: {
-                                        lower = i < (Long.MAX_VALUE - b.getValueLong());
+                                        lower = i < (Long.MIN_VALUE - b.getValueLong());
                                         break;
                                     }
                                 }
@@ -1671,11 +1708,11 @@ public class MemoryVariable {
                             case FLOATING: {
                                 switch (b.getMemorySize()){
                                     case BITS_32: {
-                                        lower = i < (Float.MAX_VALUE - b.getValueFloat());
+                                        lower = i < (Float.MIN_VALUE - b.getValueFloat());
                                         break;
                                     }
                                     case BITS_64: {
-                                        lower = i < (Double.MAX_VALUE - b.getValueDouble());
+                                        lower = i < (Double.MIN_VALUE - b.getValueDouble());
                                         break;
                                     }
                                 }
@@ -1690,15 +1727,15 @@ public class MemoryVariable {
                             case INTEGER: {
                                 switch (b.getMemorySize()) {
                                     case BITS_16: {
-                                        lower = l < (Long.MAX_VALUE - b.getValueShort());
+                                        lower = l < (Long.MIN_VALUE - b.getValueShort());
                                         break;
                                     }
                                     case BITS_32: {
-                                        lower = l < (Long.MAX_VALUE - b.getValueInt());
+                                        lower = l < (Long.MIN_VALUE - b.getValueInt());
                                         break;
                                     }
                                     case BITS_64: {
-                                        lower = l < (Long.MAX_VALUE - b.getValueLong());
+                                        lower = l < (Long.MIN_VALUE - b.getValueLong());
                                         break;
                                     }
                                 }
@@ -1707,11 +1744,11 @@ public class MemoryVariable {
                             case FLOATING: {
                                 switch (b.getMemorySize()){
                                     case BITS_32: {
-                                        lower = l < (Float.MAX_VALUE - b.getValueFloat());
+                                        lower = l < (Float.MIN_VALUE - b.getValueFloat());
                                         break;
                                     }
                                     case BITS_64: {
-                                        lower = l < (Double.MAX_VALUE - b.getValueDouble());
+                                        lower = l < (Double.MIN_VALUE - b.getValueDouble());
                                         break;
                                     }
                                 }
@@ -1730,15 +1767,15 @@ public class MemoryVariable {
                             case INTEGER: {
                                 switch (b.getMemorySize()) {
                                     case BITS_16: {
-                                        lower = f < (Float.MAX_VALUE - b.getValueShort());
+                                        lower = f < (Float.MIN_VALUE - b.getValueShort());
                                         break;
                                     }
                                     case BITS_32: {
-                                        lower = f < (Float.MAX_VALUE - b.getValueInt());
+                                        lower = f < (Float.MIN_VALUE - b.getValueInt());
                                         break;
                                     }
                                     case BITS_64: {
-                                        lower = f < (Float.MAX_VALUE - b.getValueLong());
+                                        lower = f < (Float.MIN_VALUE - b.getValueLong());
                                         break;
                                     }
                                 }
@@ -1747,11 +1784,11 @@ public class MemoryVariable {
                             case FLOATING: {
                                 switch (b.getMemorySize()){
                                     case BITS_32: {
-                                        lower = f < (Float.MAX_VALUE - b.getValueFloat());
+                                        lower = f < (Float.MIN_VALUE - b.getValueFloat());
                                         break;
                                     }
                                     case BITS_64: {
-                                        lower = f < (Double.MAX_VALUE - b.getValueDouble());
+                                        lower = f < (Double.MIN_VALUE - b.getValueDouble());
                                         break;
                                     }
                                 }
@@ -1766,15 +1803,15 @@ public class MemoryVariable {
                             case INTEGER: {
                                 switch (b.getMemorySize()) {
                                     case BITS_16: {
-                                        lower = d < (Double.MAX_VALUE - b.getValueShort());
+                                        lower = d < (Double.MIN_VALUE - b.getValueShort());
                                         break;
                                     }
                                     case BITS_32: {
-                                        lower = d < (Double.MAX_VALUE - b.getValueInt());
+                                        lower = d < (Double.MIN_VALUE - b.getValueInt());
                                         break;
                                     }
                                     case BITS_64: {
-                                        lower = d < (Double.MAX_VALUE - b.getValueLong());
+                                        lower = d < (Double.MIN_VALUE - b.getValueLong());
                                         break;
                                     }
                                 }
@@ -1783,11 +1820,11 @@ public class MemoryVariable {
                             case FLOATING: {
                                 switch (b.getMemorySize()){
                                     case BITS_32: {
-                                        lower = d < (Double.MAX_VALUE - b.getValueFloat());
+                                        lower = d < (Double.MIN_VALUE - b.getValueFloat());
                                         break;
                                     }
                                     case BITS_64: {
-                                        lower = d < (Double.MAX_VALUE - b.getValueDouble());
+                                        lower = d < (Double.MIN_VALUE - b.getValueDouble());
                                         break;
                                     }
                                 }
@@ -1802,6 +1839,8 @@ public class MemoryVariable {
         }
         return lower;
     }
+
+
 
     public enum ByteSize{
         BITS_8,

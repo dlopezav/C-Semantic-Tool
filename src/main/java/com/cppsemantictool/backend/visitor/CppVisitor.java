@@ -15,6 +15,7 @@ import java.util.List;
 
 public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     private HashMap<String, Pair<MemoryVariable, MemoryVariable>> variables;
+    //private HashMap<String, Pair<MemoryVariable, MemoryVariable>> arrays;
     private List<SemanticError> detectedErrors;
 
     public CppVisitor(List<Variable> variables) {
@@ -280,33 +281,33 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
             }
             if(ctx.getChild(2 * i - 1).getText().equals("+")) {
                 if(initialValue.Sign()){
-                    if(otherValue.GreaterOverflow(otherValue, initialValue)){
+                    if(MemoryVariable.GreaterOverflow(initialValue, otherValue)){
                         this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "Esta suma es demasiado grande para su tipo de dato."));
+                        return null;
                     }
-                    initialValue = MemoryVariable.Add(initialValue, otherValue);
                 }else{
-                    if(otherValue.LowerOverflow(otherValue, initialValue)){
-                        this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "Esta resta es demasiado grande para su tipo de dato."));
+                    if(MemoryVariable.LowerOverflow(initialValue, otherValue)){
+                        this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "Esta suma es demasiado grande para su tipo de dato."));
+                        return null;
                     }
-                    initialValue = MemoryVariable.Add(initialValue, otherValue);
                 }
-
-                //TODO: Overflow
-            }else{
+                initialValue = MemoryVariable.Add(initialValue, otherValue);
+            }else if(ctx.getChild(2 * i - 1).getText().equals("-")){
                 if(initialValue.Sign()){
-                    if(otherValue.GreaterOverflow(otherValue, initialValue)){
-                        this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "Esta suma es demasiado grande para su tipo de dato."));
-                    }
-                    initialValue = MemoryVariable.Add(initialValue, otherValue);
-                }else{
-                    if(otherValue.LowerOverflow(otherValue, initialValue)){
+                    if(MemoryVariable.GreaterOverflow(initialValue, MemoryVariable.AdditiveInverse(otherValue))){
                         this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "Esta resta es demasiado grande para su tipo de dato."));
+                        return null;
                     }
-                    initialValue = MemoryVariable.Substract(initialValue, otherValue);
+                }else{
+                    if(MemoryVariable.LowerOverflow(initialValue, MemoryVariable.AdditiveInverse(otherValue))){
+                        this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "Esta resta es demasiado grande para su tipo de dato."));
+                        return null;
+                    }
                 }
+                initialValue = MemoryVariable.Substract(initialValue, otherValue);
             }
         }
-        return super.visitAdditiveExpression(ctx);
+        return (T) initialValue;
     }
 
     @Override
@@ -320,24 +321,29 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
             if(otherValue == null){
                 return null;
             }
-            if(ctx.getChild(2 * i - 1).getText().equals("*")) {
-                MemoryVariable product = MemoryVariable.Multiply(initialValue, otherValue);
-                MemoryVariable division = MemoryVariable.Divide(product, initialValue);
-                if(!Arrays.equals(division.getArray(), otherValue.getArray())){
-                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "Este producto es demasiado grande para su tipo de dato."));
-                    return null;
-                }
-                initialValue = product;
-            }else if(ctx.getChild(2 * i - 1).getText().equals("/")){
-                if(initialValue.getRepresentation() == MemoryVariable.NumberType.INTEGER && otherValue.getRepresentation() == MemoryVariable.NumberType.INTEGER) {
-                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "Esta división es entera, revisa no perder decimales."));
-                }
-                initialValue = MemoryVariable.Divide(initialValue, otherValue);
-            }else if(ctx.getChild(2 * i - 1).getText().equals("%")){
-                if(initialValue.getRepresentation() != MemoryVariable.NumberType.INTEGER || otherValue.getRepresentation() != MemoryVariable.NumberType.INTEGER){
-                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine()+ 1 , SemanticError.ErrorType.CASTING, "La operación módulo debe realizarse entre dos números enteros."));
-                }
-                initialValue = MemoryVariable.Module(initialValue, otherValue);
+            switch (ctx.getChild(2 * i - 1).getText()) {
+                case "*":
+                    MemoryVariable product = MemoryVariable.Multiply(initialValue, otherValue);
+                    MemoryVariable division = MemoryVariable.Divide(product, initialValue);
+                    if (!Arrays.equals(division.getArray(), otherValue.getArray())) {
+                        this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.OVERFLOW, "Este producto es demasiado grande para su tipo de dato."));
+                        return null;
+                    }
+                    initialValue = product;
+                    break;
+                case "/":
+                    if (initialValue.getRepresentation() == MemoryVariable.NumberType.INTEGER && otherValue.getRepresentation() == MemoryVariable.NumberType.INTEGER) {
+                        this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "Esta división es entera, revisa no perder decimales."));
+                    }
+                    initialValue = MemoryVariable.Divide(initialValue, otherValue);
+                    break;
+                case "%":
+                    if (initialValue.getRepresentation() != MemoryVariable.NumberType.INTEGER || otherValue.getRepresentation() != MemoryVariable.NumberType.INTEGER) {
+                        this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "La operación módulo debe realizarse entre dos números enteros."));
+                        return null;
+                    }
+                    initialValue = MemoryVariable.Module(initialValue, otherValue);
+                    break;
             }
         }
         return (T) initialValue;
