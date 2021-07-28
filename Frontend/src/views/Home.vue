@@ -16,7 +16,7 @@
                   <prism-editor v-model="content" :highlight="highlighter" line-numbers class="editor"></prism-editor>
                 </b-col>
               </b-row>
-              <b-row align-h="center" align-v="center"> 
+              <b-row align-h="center" align-v="center">
                 <b-col>
                   <b-form-file v-model="file" type="file" accept=".cpp" placeholder="Seleciona el archivo" class="mt-4 text-left"/>
                 </b-col>
@@ -48,7 +48,7 @@
           <b-row align-h="center" align-v="center">
             <b-col cols="12">
               <b-button block variant="primary" type="submit">Analizar código</b-button>
-            </b-col>            
+            </b-col>
           </b-row>
         </b-overlay>
       </b-container>
@@ -62,19 +62,20 @@
             <p>{{error.message}}</p>
             <b-row>
               <b-col md="6" sm="6">
-              <p> <strong>Fila:</strong>  {{error.row}}</p>
+                <p> <strong>Fila:</strong>  {{error.row}}</p>
               </b-col>
               <b-col md="6" sm="6">
-              <p> <strong>Columna:</strong>  {{error.col}}</p>
+                <p> <strong>Columna:</strong>  {{error.col}}</p>
               </b-col>
             </b-row>
-            
+
           </b-card>
         </b-col>
       </b-row>
       <b-row v-if="detectedErrors.length === 0 && view && synErrors.length === 0">
         <b-col  :key="index" xl="12" md="12" sm="12" class="pr-4">
           <b-card :title="'No se encontraron errores'" img-width="370rm" title-text-variant="secondary">
+
           </b-card>
         </b-col>
       </b-row>
@@ -82,18 +83,18 @@
         <h4>Se encontraron los siguientes errores en su sintáxis: </h4>
       </b-row>
       <b-row v-if="synErrors">
-       <b-col v-for="(error, index) in synErrors" :key="index" xl="3" md="3" sm="6" class="pr-4">
+        <b-col v-for="(error, index) in synErrors" :key="index" xl="3" md="3" sm="6" class="pr-4">
           <b-card :title="error.type" img-width="370rm" title-text-variant="secondary">
             <p>{{error.message}}</p>
             <b-row>
               <b-col md="6" sm="6">
-              <p> <strong>Fila:</strong>  {{error.row}}</p>
+                <p> <strong>Fila:</strong>  {{error.row}}</p>
               </b-col>
               <b-col md="6" sm="6">
-              <p> <strong>Columna:</strong>  {{error.col}}</p>
+                <p> <strong>Columna:</strong>  {{error.col}}</p>
               </b-col>
             </b-row>
-            
+
           </b-card>
         </b-col>
       </b-row>
@@ -101,23 +102,22 @@
 
     <!--Variable Modal-->
     <b-modal ref="modal" id="var-modal" title="Crea una variable" no-close-on-esc hide-header-close @ok="OkCreateVariable">
-    <form ref="form" class="m-4" @submit.stop.prevent="CreateVariable">
-      <b-form-group label="Nombre de la variable" invalid-feedback="El nombre es requerido" :state="states.name">
-        <b-form-input ref="name" required placeholder="Nombre" v-model="newVar.name" :state="states.name"></b-form-input>
-      </b-form-group>
-      <b-form-group label="Valor mínimo" invalid-feedback="El mínimo es requerido y debe ser menor al maximo" :state="states.min">
-        <b-form-input ref="min" v-bind:max="newVar.max" required placeholder="Mínimo" v-model="newVar.min" :state="states.min" type="number"></b-form-input>
-      </b-form-group>
-      <b-form-group label="Valor máximo" invalid-feedback="El máximo es requerido y debe ser mayor al mínimo" :state="states.max">
-        <b-form-input ref="max" v-bind:min="newVar.min" required placeholder="Máximo" v-model="newVar.max" :state="states.max" type="number"></b-form-input>
-      </b-form-group>
-    </form>
-  </b-modal>
+      <form ref="form" class="m-4" @submit.stop.prevent="CreateVariable">
+        <b-form-group label="Nombre de la variable" invalid-feedback="El nombre es requerido" :state="states.name">
+          <b-form-input ref="name" required placeholder="Nombre" v-model="newVar.name" :state="states.name"></b-form-input>
+        </b-form-group>
+        <b-form-group label="Valor mínimo" invalid-feedback="El mínimo es requerido y debe ser menor al maximo" :state="states.min">
+          <b-form-input ref="min" v-bind:max="newVar.max" required placeholder="Mínimo" v-model="newVar.min" :state="states.min" type="number"></b-form-input>
+        </b-form-group>
+        <b-form-group label="Valor máximo" invalid-feedback="El máximo es requerido y debe ser mayor al mínimo" :state="states.max">
+          <b-form-input ref="max" v-bind:min="newVar.min" required placeholder="Máximo" v-model="newVar.max" :state="states.max" type="number"></b-form-input>
+        </b-form-group>
+      </form>
+    </b-modal>
   </div>
 </template>
 
 <script>
-
 import { PrismEditor } from 'vue-prism-editor';
 import 'vue-prism-editor/dist/prismeditor.min.css';
 import { highlight, languages } from 'prismjs/components/prism-core';
@@ -125,39 +125,36 @@ import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-c';
 import 'prismjs/components/prism-cpp';
 import 'prismjs/themes/prism-tomorrow.css';
-
 import { VueMathjax } from 'vue-mathjax';
-
 import axios from 'axios';
-
 export default {
   name: 'Home',
   data(){
-      return {
-          content: "#include <iostream>\n\nint main(){\n\tstd::cout << \"Hello world!\" << std::endl;\n\treturn 0;\n}",
-          vars: [],
-          file: File,
-          states: {
-            name: null,
-            min: null,
-            max: null
-          },
-          newVar: {
-            name: "",
-            min: 0,
-            max: 0
-          },
-          fields:{
-            loading: false
-          },
-          detectedErrors: [],
-          view: false,
-          synErrors: []
-      }
+    return {
+      content: "#include <iostream>\n\nint main(){\n\tstd::cout << \"Hello world!\" << std::endl;\n\treturn 0;\n}",
+      vars: [],
+      file: File,
+      states: {
+        name: null,
+        min: null,
+        max: null
+      },
+      newVar: {
+        name: "",
+        min: 0,
+        max: 0
+      },
+      fields:{
+        loading: false
+      },
+      detectedErrors: [],
+      view: false,
+      synErrors: []
+    }
   },
   components: {
-      PrismEditor,
-      'vue-mathjax': VueMathjax
+    PrismEditor,
+    'vue-mathjax': VueMathjax
   },
   methods: {
     highlighter(code) {
@@ -169,7 +166,7 @@ export default {
       }
       this.vars.push(this.newVar);
       this.$nextTick(() => {
-          this.$bvModal.hide('var-modal');
+        this.$bvModal.hide('var-modal');
       });
     },
     OkCreateVariable(bvModalEvt){
@@ -194,29 +191,30 @@ export default {
         "variables": this.vars
       };
       this.detectedErrors = [];
-      this.synErrors = [];
-      axios.post('http://cpp-semantic-tool.azurewebsites.net/evaluate', request)
-        .then(function(response){
-          let semanticErrors = response.data;
-          if(semanticErrors.length > 0){
-            // Mostrar Errores Semánticos
-            console.log(semanticErrors);
-            self.detectedErrors = semanticErrors;
-          }else{
-            console.log("No hay errores semánticos");
+      axios.post('https://cpp-semantic-tool.azurewebsites.net/evaluate', request)
+          .then(function(response){
+            let semanticErrors = response.data;
+            if(semanticErrors.length > 0){
+              // Mostrar Errores Semánticos
+              console.log(semanticErrors);
+              self.detectedErrors = semanticErrors;
+            }else{
+              // Mostrar No hay Errores Semáticos
+              console.log("No hay errores semánticos");
+
+            }
+            self.fields.loading = false;
+            self.view = true
+          }).catch(function(error){
+            if(error.response.status == '400'){
+              self.synErrors = error.response.data;
+            }else if(error.response){
+              // Hay Error interno en el servidor.
+            }else if(error.request){
+              // El servidor no ha respondido.
+            }
+            self.fields.loading = false;
           }
-          self.fields.loading = false;
-          self.view = true
-        }).catch(function(error){
-          if(error.request){
-            console.log("El servidor no ha respondido");
-          }else if(error.response){
-            console.log("Error interno en el servidor");
-          }else if(error.response.status == '400'){
-            self.synErrors = error.response.data;
-          }
-          self.fields.loading = false;
-        }
       );
     }
   },
@@ -265,82 +263,73 @@ export default {
     }
   }
 }
-
 </script>
 
 <style>
 .navbar{
-    margin: 2em;
-    white-space: pre;
+  margin: 2em;
+  white-space: pre;
 }
 .navbar .navbar-nav .nav-link {
-    letter-spacing: 0.5px;
-    padding-right: 1.5rem;
-    padding-left: 1.5rem;
+  letter-spacing: 0.5px;
+  padding-right: 1.5rem;
+  padding-left: 1.5rem;
 }
-
 #top {
-      background:  #004871;
-      padding: 1rem;
-      color: white;
-  }
-  #top p {
-      text-align: center;
-      padding-left: 1rem;
-      padding-right: 1rem;
-      padding-top: 1rem;
-      margin-top: 1rem;
-      margin-bottom: 1rem;
-  }
-  #bottom {
-      background: rgb(0, 0, 0);
-      color: white;
-      padding: 1rem;
-  }
-  #bottom a{
-      white-space: pre;
-      color: var(--secondary);
-  }
-
-  .editor {
-    background: #2d2d2d;
-    color: #ccc !important;
-    font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    padding: 5px;
-    height: 28rem;
-    overflow: scroll;
-  }
-
-  .variables {
-    overflow-y: scroll;
-    padding: 5px;
-    height: 28rem;
-  }
-
-  .modal-title{
-    color: #212529 !important;
-  }
-
-  .card {
-    border-radius: 1rem !important;
-    color: black;
-  } 
-
-  .card-title {
-    color: black;
-  } 
-
-  pre{
-    color: #ccc !important;
-  }
-
-  #content{
-    height: 45rem;
-    font-family: 'Dosis', sans-serif;
-  }
-  .modal-dialog > .modal-content{
+  background:  #004871;
+  padding: 1rem;
+  color: white;
+}
+#top p {
+  text-align: center;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+#bottom {
+  background: rgb(0, 0, 0);
+  color: white;
+  padding: 1rem;
+}
+#bottom a{
+  white-space: pre;
+  color: var(--secondary);
+}
+.editor {
+  background: #2d2d2d;
+  color: #ccc !important;
+  font-family: Fira code, Fira Mono, Consolas, Menlo, Courier, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 5px;
+  height: 28rem;
+  overflow: scroll;
+}
+.variables {
+  overflow-y: scroll;
+  padding: 5px;
+  height: 28rem;
+}
+.modal-title{
+  color: #212529 !important;
+}
+.card {
+  border-radius: 1rem !important;
+  color: black;
+}
+.card-title {
+  color: black;
+}
+pre{
+  color: #ccc !important;
+}
+#content{
+  height: 45rem;
+  font-family: 'Dosis', sans-serif;
+}
+.modal-dialog > .modal-content{
   background-color: #ffffff !important;
   color: black;
   border-radius: 20px;
