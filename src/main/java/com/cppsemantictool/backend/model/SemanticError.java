@@ -49,6 +49,8 @@ public class SemanticError {
         OVERFLOW,
         INFINITY_LOOP,
         CORE_DUMP,
-        CASTING
+        CASTING,
+        PRECISION,
+        UNUSED_LOOP
     }
 }

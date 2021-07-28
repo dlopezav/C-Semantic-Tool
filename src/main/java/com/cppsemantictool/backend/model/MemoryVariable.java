@@ -48,6 +48,13 @@ public class MemoryVariable {
         this.value = bb.array();
     }
 
+    public MemoryVariable(Boolean value){
+        this(ByteSize.BITS_8, NumberType.BOOLEAN);
+        ByteBuffer bb = ByteBuffer.allocate(1);
+        bb.put(value ? (byte)1 : (byte)0);
+        this.value = bb.array();
+    }
+
     public byte[] getArray(){
         return this.value;
     }
@@ -78,7 +85,6 @@ public class MemoryVariable {
         return bb.getInt();
     }
 
-
     public Long getValueLong() {
         ByteBuffer bb = ByteBuffer.wrap(this.value);
         return bb.getLong();
@@ -94,6 +100,10 @@ public class MemoryVariable {
         return bb.getDouble();
     }
 
+    public Boolean getValueBoolean() {
+        ByteBuffer bb = ByteBuffer.wrap(this.value);
+        return bb.get() != 0;
+    }
 
     public boolean Sign(){
         boolean sign = true;
@@ -633,7 +643,7 @@ public class MemoryVariable {
         return c;
     }
 
-    public static MemoryVariable Substract(MemoryVariable a, MemoryVariable b){
+    public static MemoryVariable Subtract(MemoryVariable a, MemoryVariable b){
         MemoryVariable c = null;
         switch (a.getRepresentation()){
             case INTEGER: {
@@ -1427,7 +1437,7 @@ public class MemoryVariable {
                         break;
                     }
                     case BITS_64: {
-                        MemoryVariable v = new MemoryVariable(-a.getValueLong());
+                        b = new MemoryVariable(-a.getValueLong());
                         break;
                     }
                 }
@@ -1436,11 +1446,11 @@ public class MemoryVariable {
             case FLOATING: {
                 switch (a.memorySize){
                     case BITS_32: {
-                        MemoryVariable v = new MemoryVariable(-a.getValueFloat());
+                        b = new MemoryVariable(-a.getValueFloat());
                         break;
                     }
                     case BITS_64: {
-                        MemoryVariable v = new MemoryVariable(-a.getValueDouble());
+                        b = new MemoryVariable(-a.getValueDouble());
                         break;
                     }
                 }
@@ -1840,7 +1850,1183 @@ public class MemoryVariable {
         return lower;
     }
 
+    public static MemoryVariable Less(MemoryVariable a, MemoryVariable b) {
+        MemoryVariable c = null;
+        switch (a.getRepresentation()){
+            case INTEGER: {
+                switch (a.getMemorySize()){
+                    case BITS_16: {
+                        Short s = a.getValueShort();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(s < b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(s < b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(s < b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(s < b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(s < b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    case BITS_32: {
+                        Integer i = a.getValueInt();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(i < b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(i < b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(i < b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(i < b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(i < b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case BITS_64: {
+                        Long l = a.getValueLong();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(l < b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(l < b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(l < b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(l < b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(l < b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            case FLOATING: {
+                switch (a.getMemorySize()){
+                    case BITS_32: {
+                        Float f = a.getValueFloat();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(f < b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(f < b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(f < b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(f < b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(f < b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case BITS_64: {
+                        Double d = a.getValueDouble();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(d < b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(d < b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(d < b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(d < b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(d < b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        return c;
+    }
 
+    public static MemoryVariable Greater(MemoryVariable a, MemoryVariable b) {
+        MemoryVariable c = null;
+        switch (a.getRepresentation()){
+            case INTEGER: {
+                switch (a.getMemorySize()){
+                    case BITS_16: {
+                        Short s = a.getValueShort();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(s > b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(s > b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(s > b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(s > b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(s > b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    case BITS_32: {
+                        Integer i = a.getValueInt();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(i > b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(i > b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(i > b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(i > b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(i > b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case BITS_64: {
+                        Long l = a.getValueLong();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(l > b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(l > b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(l > b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(l > b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(l > b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            case FLOATING: {
+                switch (a.getMemorySize()){
+                    case BITS_32: {
+                        Float f = a.getValueFloat();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(f > b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(f > b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(f > b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(f > b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(f > b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case BITS_64: {
+                        Double d = a.getValueDouble();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(d > b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(d > b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(d > b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(d > b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(d > b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        return c;
+    }
+
+    public static MemoryVariable LessEqual(MemoryVariable a, MemoryVariable b) {
+        MemoryVariable c = null;
+        switch (a.getRepresentation()){
+            case INTEGER: {
+                switch (a.getMemorySize()){
+                    case BITS_16: {
+                        Short s = a.getValueShort();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(s <= b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(s <= b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(s <= b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(s <= b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(s <= b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    case BITS_32: {
+                        Integer i = a.getValueInt();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(i <= b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(i <= b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(i < b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(i <= b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(i <= b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case BITS_64: {
+                        Long l = a.getValueLong();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(l <= b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(l <= b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(l <= b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(l <= b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(l <= b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            case FLOATING: {
+                switch (a.getMemorySize()){
+                    case BITS_32: {
+                        Float f = a.getValueFloat();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(f <= b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(f <= b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(f <= b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(f <= b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(f <= b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case BITS_64: {
+                        Double d = a.getValueDouble();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(d <= b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(d <= b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(d <= b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(d <= b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(d <= b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        return c;
+    }
+
+    public static MemoryVariable GreaterEqual(MemoryVariable a, MemoryVariable b) {
+        MemoryVariable c = null;
+        switch (a.getRepresentation()){
+            case INTEGER: {
+                switch (a.getMemorySize()){
+                    case BITS_16: {
+                        Short s = a.getValueShort();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(s >= b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(s >= b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(s >= b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(s >= b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(s >= b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    case BITS_32: {
+                        Integer i = a.getValueInt();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(i >= b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(i >= b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(i >= b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(i >= b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(i >= b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case BITS_64: {
+                        Long l = a.getValueLong();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(l >= b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(l >= b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(l >= b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(l >= b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(l >= b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            case FLOATING: {
+                switch (a.getMemorySize()){
+                    case BITS_32: {
+                        Float f = a.getValueFloat();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(f >= b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(f >= b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(f >= b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(f >= b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(f >= b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case BITS_64: {
+                        Double d = a.getValueDouble();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(d >= b.getValueShort());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(d >= b.getValueInt());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(d >= b.getValueLong());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(d >= b.getValueFloat());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(d >= b.getValueDouble());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        return c;
+    }
+
+    public static MemoryVariable Equal(MemoryVariable a, MemoryVariable b) {
+        MemoryVariable c = null;
+        switch (a.getRepresentation()){
+            case INTEGER: {
+                switch (a.getMemorySize()){
+                    case BITS_16: {
+                        Short s = a.getValueShort();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(s.shortValue() == b.getValueShort().shortValue());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(s.shortValue() == b.getValueInt().intValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(s.shortValue() == b.getValueLong().longValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(s.shortValue() == b.getValueFloat().floatValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(s.shortValue() == b.getValueDouble().doubleValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    case BITS_32: {
+                        Integer i = a.getValueInt();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(i.intValue() == b.getValueShort().shortValue());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(i.intValue() == b.getValueInt().intValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(i.intValue() == b.getValueLong().longValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(i.intValue() == b.getValueFloat().floatValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(i.intValue() == b.getValueDouble().doubleValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case BITS_64: {
+                        Long l = a.getValueLong();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(l.longValue() == b.getValueShort().shortValue());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(l.longValue() == b.getValueInt().intValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(l.longValue() == b.getValueLong().longValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(l.longValue() == b.getValueFloat().floatValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(l.longValue() == b.getValueDouble().doubleValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            case FLOATING: {
+                switch (a.getMemorySize()){
+                    case BITS_32: {
+                        Float f = a.getValueFloat();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(f.floatValue() == b.getValueShort().shortValue());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(f.floatValue() == b.getValueInt().intValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(f.floatValue() == b.getValueLong().longValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(f.floatValue() == b.getValueFloat().floatValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(f.floatValue() == b.getValueDouble().doubleValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case BITS_64: {
+                        Double d = a.getValueDouble();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(d.doubleValue() == b.getValueShort().shortValue());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(d.doubleValue() == b.getValueInt().intValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(d.doubleValue() == b.getValueLong().longValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(d.doubleValue() == b.getValueFloat().floatValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(d.doubleValue() == b.getValueDouble().doubleValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        return c;
+    }
+
+    public static MemoryVariable NotEqual(MemoryVariable a, MemoryVariable b) {
+        MemoryVariable c = null;
+        switch (a.getRepresentation()){
+            case INTEGER: {
+                switch (a.getMemorySize()){
+                    case BITS_16: {
+                        Short s = a.getValueShort();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(s.shortValue() != b.getValueShort().shortValue());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(s.shortValue() != b.getValueInt().intValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(s.shortValue() != b.getValueLong().longValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(s.shortValue() != b.getValueFloat().floatValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(s.shortValue() != b.getValueDouble().doubleValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    case BITS_32: {
+                        Integer i = a.getValueInt();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(i.intValue() != b.getValueShort().shortValue());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(i.intValue() != b.getValueInt().intValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(i.intValue() != b.getValueLong().longValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(i.intValue() != b.getValueFloat().floatValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(i.intValue() != b.getValueDouble().doubleValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case BITS_64: {
+                        Long l = a.getValueLong();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(l.longValue() != b.getValueShort().shortValue());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(l.longValue() != b.getValueInt().intValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(l.longValue() != b.getValueLong().longValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(l.longValue() != b.getValueFloat().floatValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(l.longValue() != b.getValueDouble().doubleValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            case FLOATING: {
+                switch (a.getMemorySize()){
+                    case BITS_32: {
+                        Float f = a.getValueFloat();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(f.floatValue() != b.getValueShort().shortValue());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(f.floatValue() != b.getValueInt().intValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(f.floatValue() != b.getValueLong().longValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(f.floatValue() != b.getValueFloat().floatValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(f.floatValue() != b.getValueDouble().doubleValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                    case BITS_64: {
+                        Double d = a.getValueDouble();
+                        switch (b.getRepresentation()){
+                            case INTEGER: {
+                                switch (b.getMemorySize()) {
+                                    case BITS_16: {
+                                        c = new MemoryVariable(d.doubleValue() != b.getValueShort().shortValue());
+                                        break;
+                                    }
+                                    case BITS_32: {
+                                        c = new MemoryVariable(d.doubleValue() != b.getValueInt().intValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(d.doubleValue() != b.getValueLong().longValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            case FLOATING: {
+                                switch (b.getMemorySize()){
+                                    case BITS_32: {
+                                        c = new MemoryVariable(d.doubleValue() != b.getValueFloat().floatValue());
+                                        break;
+                                    }
+                                    case BITS_64: {
+                                        c = new MemoryVariable(d.doubleValue() != b.getValueDouble().doubleValue());
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        return c;
+    }
+
+    public static MemoryVariable And(MemoryVariable a, MemoryVariable b){
+        return new MemoryVariable(a.getValueBoolean() && b.getValueBoolean());
+    }
+
+    public static MemoryVariable Or(MemoryVariable a, MemoryVariable b){
+        return new MemoryVariable(a.getValueBoolean() || b.getValueBoolean());
+    }
 
     public enum ByteSize{
         BITS_8,
@@ -1851,6 +3037,7 @@ public class MemoryVariable {
 
     public enum NumberType{
         INTEGER,
-        FLOATING
+        FLOATING,
+        BOOLEAN
     }
 }

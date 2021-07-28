@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 
 public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
-    private HashMap<String, Pair<MemoryVariable, MemoryVariable>> variables;
+    private final HashMap<String, Pair<MemoryVariable, MemoryVariable>> variables;
     //private HashMap<String, Pair<MemoryVariable, MemoryVariable>> arrays;
-    private List<SemanticError> detectedErrors;
+    private final List<SemanticError> detectedErrors;
 
     public CppVisitor(List<Variable> variables) {
         this.variables = new HashMap<>();
@@ -40,59 +40,106 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitIterationStatement(CPP14Parser.IterationStatementContext ctx) {
+        List<String> localUsedVariables = new ArrayList<>();
         if(ctx.Do() != null) {
-            List<CPP14Parser.StatementContext> statements = ctx.statement().compoundStatement().statementSeq().statement();
-            for (CPP14Parser.StatementContext statement : statements){
-                if(statement.labeledStatement() != null){
-                    this.visitLabeledStatement(statement.labeledStatement());
-                }else if(statement.declarationStatement() != null){
-                    this.visitDeclarationStatement(statement.declarationStatement());
-                }else if(statement.expressionStatement() != null){
-                    this.visitExpressionStatement(statement.expressionStatement());
-                }else if(statement.compoundStatement() != null){
-                    this.visitCompoundStatement(statement.compoundStatement());
-                }else if(statement.selectionStatement() != null){
-                    this.visitSelectionStatement(statement.selectionStatement());
-                }else if(statement.iterationStatement() != null){
-                    this.visitIterationStatement(statement.iterationStatement());
-                }else if(statement.jumpStatement() != null){
-                    this.visitJumpStatement(statement.jumpStatement());
-                }else if(statement.tryBlock() != null){
-                    this.visitTryBlock(statement.tryBlock());
+            MemoryVariable expression = (MemoryVariable) this.visitExpression(ctx.expression());
+            if(expression != null && !expression.getValueBoolean()){
+                this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.UNUSED_LOOP, "Este ciclo Do-while puede no estar siendo usado."));
+            }
+            List<String> expressionVariables = new ArrayList<>();
+            String expressions = ctx.expression().getText();
+            for(int i = 0; i <= expressions.length(); i++){
+                for(int j = i; j <= expressions.length(); j++){
+                    String s = expressions.substring(i, j);
+                    boolean flag = true;
+                    for(char c : s.toCharArray()){
+                        flag &= Character.isLetter(c);
+                    }
+                    if(flag && s.toCharArray().length > 0){
+                        expressionVariables.add(s);
+                    }
                 }
             }
+            if(ctx.statement().compoundStatement().statementSeq() != null){
+                List<CPP14Parser.StatementContext> statements = ctx.statement().compoundStatement().statementSeq().statement();
+                for (CPP14Parser.StatementContext statement : statements){
+                    if(statement.labeledStatement() != null){
+                        List<String> vars = (List<String>) this.visitLabeledStatement(statement.labeledStatement());
+                        if(vars != null) localUsedVariables.addAll(vars);
+                    }else if(statement.declarationStatement() != null){
+                        List<String> vars = (List<String>) this.visitDeclarationStatement(statement.declarationStatement());
+                        if(vars != null) localUsedVariables.addAll(vars);
+                    }else if(statement.expressionStatement() != null){
+                        List<String> vars = (List<String>) this.visitExpressionStatement(statement.expressionStatement());
+                        if(vars != null) localUsedVariables.addAll(vars);
+                    }else if(statement.compoundStatement() != null){
+                        List<String> vars = (List<String>) this.visitCompoundStatement(statement.compoundStatement());
+                        if(vars != null) localUsedVariables.addAll(vars);
+                    }else if(statement.selectionStatement() != null){
+                        List<String> vars = (List<String>) this.visitSelectionStatement(statement.selectionStatement());
+                        if(vars != null) localUsedVariables.addAll(vars);
+                    }else if(statement.iterationStatement() != null){
+                        List<String> vars = (List<String>) this.visitIterationStatement(statement.iterationStatement());
+                        if(vars != null) localUsedVariables.addAll(vars);
+                    }else if(statement.jumpStatement() != null){
+                        List<String> vars = (List<String>) this.visitJumpStatement(statement.jumpStatement())
+                        if(vars != null) localUsedVariables.addAll(vars);
+                    }else if(statement.tryBlock() != null){
+                        List<String> vars = (List<String>) this.visitTryBlock(statement.tryBlock())
+                        if(vars != null) localUsedVariables.addAll(vars);
+                    }
+                }
+            }
+            boolean infinity = true;
+            for(String localUsedVariable : localUsedVariables){
+                for(String expressionVariable : expressionVariables){
+                    if(localUsedVariable.equals(expressionVariable)){
+                        infinity = false;
+                        break;
+                    }
+                }
+                if(!infinity) break;
+            }
+            if(infinity){
+                this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.INFINITY_LOOP, "Este ciclo Do-While puede ser un ciclo infinito."));
+            }
+
         }else if(ctx.While() != null){
+            MemoryVariable expression = (MemoryVariable) this.visitExpression(ctx.expression());
+            if(!expression.getValueBoolean()){
+                this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.UNUSED_LOOP, "Este ciclo While puede no estár siendo usado."));
+            }
+
             List<CPP14Parser.StatementContext> statements = ctx.statement().compoundStatement().statementSeq().statement();
             for (CPP14Parser.StatementContext statement : statements){
                 if(statement.labeledStatement() != null){
-                    this.visitLabeledStatement(statement.labeledStatement());
+                    localUsedVariables.addAll((List<String>) this.visitLabeledStatement(statement.labeledStatement()));
                 }else if(statement.declarationStatement() != null){
-                    this.visitDeclarationStatement(statement.declarationStatement());
+                    localUsedVariables.addAll((List<String>) this.visitDeclarationStatement(statement.declarationStatement()));
                 }else if(statement.expressionStatement() != null){
-                    this.visitExpressionStatement(statement.expressionStatement());
+                    localUsedVariables.addAll((List<String>) this.visitExpressionStatement(statement.expressionStatement()));
                 }else if(statement.compoundStatement() != null){
-                    this.visitCompoundStatement(statement.compoundStatement());
+                    localUsedVariables.addAll((List<String>) this.visitCompoundStatement(statement.compoundStatement()));
                 }else if(statement.selectionStatement() != null){
-                    this.visitSelectionStatement(statement.selectionStatement());
+                    localUsedVariables.addAll((List<String>) this.visitSelectionStatement(statement.selectionStatement()));
                 }else if(statement.iterationStatement() != null){
-                    this.visitIterationStatement(statement.iterationStatement());
+                    localUsedVariables.addAll((List<String>) this.visitIterationStatement(statement.iterationStatement()));
                 }else if(statement.jumpStatement() != null){
-                    this.visitJumpStatement(statement.jumpStatement());
+                    localUsedVariables.addAll((List<String>) this.visitJumpStatement(statement.jumpStatement()));
                 }else if(statement.tryBlock() != null){
-                    this.visitTryBlock(statement.tryBlock());
+                    localUsedVariables.addAll((List<String>) this.visitTryBlock(statement.tryBlock()));
                 }
             }
         }else if(ctx.For() != null){
+
+
+
             try{
                 this.visitForInitStatement(ctx.forInitStatement());
 
+
+
                 String condition = ctx.condition().getText();
-                String ands[] = condition.trim().split("&&");
-                for(String and : ands){
-                    String ors[] = and.trim().split("\\|\\|");
-                }
-
-
 
                 String expression = ctx.expression().getText();
 
@@ -103,30 +150,54 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
             List<CPP14Parser.StatementContext> statements = ctx.statement().compoundStatement().statementSeq().statement();
             for (CPP14Parser.StatementContext statement : statements){
                 if(statement.labeledStatement() != null){
-                    this.visitLabeledStatement(statement.labeledStatement());
+                    localUsedVariables.addAll((List<String>) this.visitLabeledStatement(statement.labeledStatement()));
                 }else if(statement.declarationStatement() != null){
-                    this.visitDeclarationStatement(statement.declarationStatement());
+                    localUsedVariables.addAll((List<String>) this.visitDeclarationStatement(statement.declarationStatement()));
                 }else if(statement.expressionStatement() != null){
-                    this.visitExpressionStatement(statement.expressionStatement());
+                    localUsedVariables.addAll((List<String>) this.visitExpressionStatement(statement.expressionStatement()));
                 }else if(statement.compoundStatement() != null){
-                    this.visitCompoundStatement(statement.compoundStatement());
+                    localUsedVariables.addAll((List<String>) this.visitCompoundStatement(statement.compoundStatement()));
                 }else if(statement.selectionStatement() != null){
-                    this.visitSelectionStatement(statement.selectionStatement());
+                    localUsedVariables.addAll((List<String>) this.visitSelectionStatement(statement.selectionStatement()));
                 }else if(statement.iterationStatement() != null){
-                    this.visitIterationStatement(statement.iterationStatement());
+                    localUsedVariables.addAll((List<String>) this.visitIterationStatement(statement.iterationStatement()));
                 }else if(statement.jumpStatement() != null){
-                    this.visitJumpStatement(statement.jumpStatement());
+                    localUsedVariables.addAll((List<String>) this.visitJumpStatement(statement.jumpStatement()));
                 }else if(statement.tryBlock() != null){
-                    this.visitTryBlock(statement.tryBlock());
+                    localUsedVariables.addAll((List<String>) this.visitTryBlock(statement.tryBlock()));
                 }
             }
         }
-        return null;
+        return (T) localUsedVariables;
+    }
+
+    @Override
+    public T visitDeclarationStatement(CPP14Parser.DeclarationStatementContext ctx) {
+        return this.visitBlockDeclaration(ctx.blockDeclaration());
+    }
+
+    @Override
+    public T visitBlockDeclaration(CPP14Parser.BlockDeclarationContext ctx) {
+        if(ctx.simpleDeclaration() != null){
+            return this.visitSimpleDeclaration(ctx.simpleDeclaration());
+        }
+        return super.visitBlockDeclaration(ctx);
+    }
+
+    @Override
+    public T visitCondition(CPP14Parser.ConditionContext ctx) {
+        if(ctx.expression() != null){
+            return this.visitExpression(ctx.expression());
+        }
+        return super.visitCondition(ctx);
     }
 
     @Override
     public T visitForInitStatement(CPP14Parser.ForInitStatementContext ctx) {
-        return super.visitForInitStatement(ctx);
+        if(ctx.simpleDeclaration() != null){
+            return this.visitSimpleDeclaration(ctx.simpleDeclaration());
+        }
+        return null;
     }
 
     @Override
@@ -160,7 +231,6 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                                 this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "La variable (" + var.declarator().getText() + ") es más pequeña o más grande que su tipo de dato."));
                             }
                         } else if (type.equals("long")) {
-
 
                         }
                     }
@@ -218,6 +288,14 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     }
 
     @Override
+    public T visitExpression(CPP14Parser.ExpressionContext ctx) {
+        if(ctx.assignmentExpression().size() > 0){
+            return this.visitAssignmentExpression(ctx.assignmentExpression(0));
+        }
+        return null;
+    }
+
+    @Override
     public T visitAssignmentExpression(CPP14Parser.AssignmentExpressionContext ctx) {
         return this.visitConditionalExpression(ctx.conditionalExpression());
     }
@@ -229,12 +307,34 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitLogicalOrExpression(CPP14Parser.LogicalOrExpressionContext ctx) {
-        return this.visitLogicalAndExpression(ctx.logicalAndExpression(0));
+        MemoryVariable initialValue = (MemoryVariable) this.visitLogicalAndExpression(ctx.logicalAndExpression(0));
+        if(ctx.logicalAndExpression().size() == 1){
+            return (T) initialValue;
+        }
+        MemoryVariable otherValue = (MemoryVariable) this.visitLogicalAndExpression(ctx.logicalAndExpression(1));
+        if(initialValue.getRepresentation() != MemoryVariable.NumberType.BOOLEAN || otherValue.getRepresentation() != MemoryVariable.NumberType.BOOLEAN){
+            this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "La operación lógica solo puede ser realizada entre dos valroes booleanos"));
+        }
+        if(ctx.OrOr().size() > 0){
+            return (T) MemoryVariable.Or(initialValue, otherValue);
+        }
+        return null;
     }
 
     @Override
     public T visitLogicalAndExpression(CPP14Parser.LogicalAndExpressionContext ctx) {
-        return this.visitInclusiveOrExpression(ctx.inclusiveOrExpression(0));
+        MemoryVariable initialValue = (MemoryVariable) this.visitInclusiveOrExpression(ctx.inclusiveOrExpression(0));
+        if(ctx.inclusiveOrExpression().size() == 1){
+            return (T) initialValue;
+        }
+        MemoryVariable otherValue = (MemoryVariable) this.visitInclusiveOrExpression(ctx.inclusiveOrExpression(1));
+        if(initialValue.getRepresentation() != MemoryVariable.NumberType.BOOLEAN || otherValue.getRepresentation() != MemoryVariable.NumberType.BOOLEAN){
+            this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "La operación lógica solo puede ser realizada entre dos valroes booleanos"));
+        }
+        if(ctx.AndAnd().size() > 0){
+            return (T) MemoryVariable.And(initialValue, otherValue);
+        }
+        return null;
     }
 
     @Override
@@ -254,12 +354,50 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitEqualityExpression(CPP14Parser.EqualityExpressionContext ctx) {
-        return this.visitRelationalExpression(ctx.relationalExpression(0));
+        MemoryVariable initialValue = (MemoryVariable) this.visitRelationalExpression(ctx.relationalExpression(0));
+        if(ctx.relationalExpression().size() == 1){
+            return (T) initialValue;
+        }
+        MemoryVariable otherValue = (MemoryVariable) this.visitRelationalExpression(ctx.relationalExpression(1));
+        if(ctx.Equal().size() > 0){
+            if(initialValue.getRepresentation() == MemoryVariable.NumberType.FLOATING && otherValue.getRepresentation() == MemoryVariable.NumberType.FLOATING){
+                this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.PRECISION, "La comparación de igualdad puede no ser precisa, te sugerimos agregar un delta de margen de error."));
+            }
+            return (T) MemoryVariable.Equal(initialValue, otherValue);
+        }else if(ctx.NotEqual().size() > 0) {
+            if(initialValue.getRepresentation() == MemoryVariable.NumberType.FLOATING && otherValue.getRepresentation() == MemoryVariable.NumberType.FLOATING){
+                this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.PRECISION, "La comparación de desigualdad puede no ser precisa, te sugerimos agregar un delta de margen de error."));
+            }
+            return (T) MemoryVariable.NotEqual(initialValue, otherValue);
+        }
+        return null;
     }
 
     @Override
     public T visitRelationalExpression(CPP14Parser.RelationalExpressionContext ctx) {
-        return this.visitShiftExpression(ctx.shiftExpression(0));
+        MemoryVariable initialValue = (MemoryVariable) this.visitShiftExpression(ctx.shiftExpression(0));
+        if(ctx.shiftExpression().size() == 1){
+            return (T) initialValue;
+        }
+        MemoryVariable otherValue = (MemoryVariable) this.visitShiftExpression(ctx.shiftExpression(1));
+        if(initialValue != null && otherValue != null) {
+            if (ctx.Less().size() > 0) {
+                return (T) MemoryVariable.Less(initialValue, otherValue);
+            } else if (ctx.Greater().size() > 0) {
+                return (T) MemoryVariable.Greater(initialValue, otherValue);
+            } else if (ctx.LessEqual().size() > 0) {
+                if (initialValue.getRepresentation() == MemoryVariable.NumberType.FLOATING && otherValue.getRepresentation() == MemoryVariable.NumberType.FLOATING) {
+                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.PRECISION, "La comparación menor o igual puede no ser precisa entre dos decimales iguales."));
+                }
+                return (T) MemoryVariable.LessEqual(initialValue, otherValue);
+            } else if (ctx.GreaterEqual().size() > 0) {
+                if (initialValue.getRepresentation() == MemoryVariable.NumberType.FLOATING && otherValue.getRepresentation() == MemoryVariable.NumberType.FLOATING) {
+                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.PRECISION, "La comparación mayor o igual puede no ser precisa entre dos decimales iguales."));
+                }
+                return (T) MemoryVariable.GreaterEqual(initialValue, otherValue);
+            }
+        }
+        return null;
     }
 
     @Override
@@ -304,7 +442,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                         return null;
                     }
                 }
-                initialValue = MemoryVariable.Substract(initialValue, otherValue);
+                initialValue = MemoryVariable.Subtract(initialValue, otherValue);
             }
         }
         return (T) initialValue;
