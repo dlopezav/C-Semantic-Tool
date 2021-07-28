@@ -170,6 +170,11 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     }
 
     @Override
+    public T visitExpressionStatement(CPP14Parser.ExpressionStatementContext ctx) {
+        return this.visitExpression(ctx.expression());
+    }
+
+    @Override
     public T visitDeclarationStatement(CPP14Parser.DeclarationStatementContext ctx) {
         return this.visitBlockDeclaration(ctx.blockDeclaration());
     }
@@ -202,6 +207,8 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     public T visitStatement(CPP14Parser.StatementContext ctx) {
         if(ctx.declarationStatement()!=null) {
             return this.visitDeclarationStatement(ctx.declarationStatement());
+        }else if(ctx.expressionStatement() != null){
+            return this.visitExpressionStatement(ctx.expressionStatement());
         }
         return null;
     }
@@ -265,12 +272,21 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                 MemoryVariable newMin = variables.get(vars.get(0).declarator().getText()).a;
                 this.variables.put(vars.get(0).declarator().getText(),new Pair<>(newMin,newMax));
             }
+            return null;
         }
         //TODO: Errores de casting en asignaciones y declaraciones tipos diferentes detectados
         return (T) declarations;
     }
 
+    @Override
+    public T visitInitDeclaratorList(CPP14Parser.InitDeclaratorListContext ctx) {
+        return this.visitInitDeclarator(ctx.initDeclarator(0));
+    }
 
+    @Override
+    public T visitInitDeclarator(CPP14Parser.InitDeclaratorContext ctx) {
+        return this.visitDeclarator(ctx.declarator());
+    }
 
     @Override
     public T visitDeclarator(CPP14Parser.DeclaratorContext ctx) {
@@ -279,7 +295,6 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitPointerDeclarator(CPP14Parser.PointerDeclaratorContext ctx) {
-
         return this.visitNoPointerDeclarator(ctx.noPointerDeclarator());
     }
 
@@ -288,9 +303,13 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
         if(ctx.declaratorid() != null) {
             return this.visitDeclaratorid(ctx.declaratorid());
         }
-        //String arrayName = ctx.noPointerDeclarator().getText();
-        //MemoryVariable size = (MemoryVariable) this.visitConstantExpression(ctx.constantExpression());
-        //this.arrays.put(arrayName, size.getValueInt());
+        /*String arrayName = ctx.noPointerDeclarator().getText();
+        if(arrayName.contains("[") && arrayName.contains("]")){
+            MemoryVariable size = (MemoryVariable) this.visitConstantExpression(ctx.constantExpression());
+            this.arrays.put(arrayName, size.getValueInt());
+        }else{
+            return null;
+        }*/
         return null;
     }
 
@@ -452,7 +471,6 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitShiftExpression(CPP14Parser.ShiftExpressionContext ctx) {
-        ctx.shiftOperator();
         String initialValue = ctx.additiveExpression(0).getText();
         if(initialValue.contains("cin")){
             for(CPP14Parser.ShiftOperatorContext op : ctx.shiftOperator()){
