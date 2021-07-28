@@ -265,6 +265,14 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                 }
 
             }
+        }else{
+            if(ctx.initDeclaratorList() != null){
+                List<CPP14Parser.InitDeclaratorContext> vars = ctx.initDeclaratorList().initDeclarator();
+                MemoryVariable newMax = (MemoryVariable) this.visitInitializer(vars.get(0).initializer());
+                MemoryVariable newMin = variables.get(vars.get(0).declarator().getText()).a;
+                this.variables.put(vars.get(0).declarator().getText(),new Pair<>(newMin,newMax));
+            }
+            return null;
         }
         //TODO: Errores de casting en asignaciones y declaraciones tipos diferentes detectados
         return (T) declarations;
@@ -343,7 +351,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitConstantExpression(CPP14Parser.ConstantExpressionContext ctx) {
-        if(ctx.conditionalExpression() != null){
+        if(ctx!= null && ctx.conditionalExpression() != null){
             return this.visitConditionalExpression(ctx.conditionalExpression());
         }
         return null;
