@@ -75,7 +75,6 @@
       <b-row v-if="detectedErrors.length === 0 && view && synErrors.length === 0">
         <b-col  :key="index" xl="12" md="12" sm="12" class="pr-4">
           <b-card :title="'No se encontraron errores'" img-width="370rm" title-text-variant="secondary">
-            
           </b-card>
         </b-col>
       </b-row>
@@ -196,7 +195,7 @@ export default {
       };
       this.detectedErrors = [];
       this.synErrors = [];
-      axios.post('localhost:9000/evaluate', request)
+      axios.post('http://cpp-semantic-tool.azurewebsites.net/evaluate', request)
         .then(function(response){
           let semanticErrors = response.data;
           if(semanticErrors.length > 0){
@@ -204,19 +203,17 @@ export default {
             console.log(semanticErrors);
             self.detectedErrors = semanticErrors;
           }else{
-            // Mostrar No hay Errores Semáticos
             console.log("No hay errores semánticos");
-            
           }
           self.fields.loading = false;
           self.view = true
         }).catch(function(error){
-          if(error.response.status == '400'){
-            self.synErrors = error.response.data;
+          if(error.request){
+            console.log("El servidor no ha respondido");
           }else if(error.response){
-            // Hay Error interno en el servidor.
-          }else if(error.request){
-            // El servidor no ha respondido.
+            console.log("Error interno en el servidor");
+          }else if(error.response.status == '400'){
+            self.synErrors = error.response.data;
           }
           self.fields.loading = false;
         }

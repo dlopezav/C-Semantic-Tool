@@ -51,6 +51,7 @@ public class SemanticError {
         CORE_DUMP,
         CASTING,
         PRECISION,
-        UNUSED_LOOP
+        UNUSED_LOOP,
+        INPUT_OUTPUT
     }
 }

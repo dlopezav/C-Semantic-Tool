@@ -12,11 +12,12 @@ import java.util.*;
 
 public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     private final HashMap<String, Pair<MemoryVariable, MemoryVariable>> variables;
-    //private HashMap<String, Pair<MemoryVariable, MemoryVariable>> arrays;
+    private HashMap<String, Integer> arrays;
     private final List<SemanticError> detectedErrors;
 
     public CppVisitor(List<Variable> variables) {
         this.variables = new HashMap<>();
+        this.arrays = new HashMap<>();
         for(Variable v : variables){
             MemoryVariable min = new MemoryVariable(v.getMin());
             MemoryVariable max = new MemoryVariable(v.getMax());
@@ -79,10 +80,10 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                         List<String> vars = (List<String>) this.visitIterationStatement(statement.iterationStatement());
                         if(vars != null) localUsedVariables.addAll(vars);
                     }else if(statement.jumpStatement() != null){
-                        List<String> vars = (List<String>) this.visitJumpStatement(statement.jumpStatement())
+                        List<String> vars = (List<String>) this.visitJumpStatement(statement.jumpStatement());
                         if(vars != null) localUsedVariables.addAll(vars);
                     }else if(statement.tryBlock() != null){
-                        List<String> vars = (List<String>) this.visitTryBlock(statement.tryBlock())
+                        List<String> vars = (List<String>) this.visitTryBlock(statement.tryBlock());
                         if(vars != null) localUsedVariables.addAll(vars);
                     }
                 }
@@ -206,16 +207,6 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     }
 
     @Override
-    public T visitDeclarationStatement(CPP14Parser.DeclarationStatementContext ctx) {
-        return this.visitBlockDeclaration(ctx.blockDeclaration());
-    }
-
-    @Override
-    public T visitBlockDeclaration(CPP14Parser.BlockDeclarationContext ctx) {
-        return this.visitSimpleDeclaration(ctx.simpleDeclaration());
-    }
-
-    @Override
     public T visitSimpleDeclaration(CPP14Parser.SimpleDeclarationContext ctx) {
         List<String> declarations = new ArrayList<String>();
         String type = null;
@@ -262,9 +253,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
                         }
                     }
-                    // este retornaría el nombre de la variable
                     declarations.add(var.declarator().getText());
-                     // Este retornaría el memoryvariable
                     this.variables.put(type, new Pair<>(new MemoryVariable(0), new MemoryVariable(0)));
                 }
 
@@ -284,15 +273,18 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitPointerDeclarator(CPP14Parser.PointerDeclaratorContext ctx) {
-        String a= ctx.noPointerDeclarator().getText();
+
         return this.visitNoPointerDeclarator(ctx.noPointerDeclarator());
     }
 
     @Override
     public T visitNoPointerDeclarator(CPP14Parser.NoPointerDeclaratorContext ctx) {
-        if(ctx.declaratorid()!=null) {
+        if(ctx.declaratorid() != null) {
             return this.visitDeclaratorid(ctx.declaratorid());
         }
+        String arrayName = ctx.noPointerDeclarator().getText();
+        MemoryVariable size = (MemoryVariable) this.visitConstantExpression(ctx.constantExpression());
+        this.arrays.put(arrayName, size.getValueInt());
         return null;
     }
 
@@ -333,8 +325,28 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     }
 
     @Override
+    public T visitConstantExpression(CPP14Parser.ConstantExpressionContext ctx) {
+        if(ctx.conditionalExpression() != null){
+            return this.visitConditionalExpression(ctx.conditionalExpression());
+        }
+        return null;
+    }
+
+    @Override
     public T visitConditionalExpression(CPP14Parser.ConditionalExpressionContext ctx) {
-        return this.visitLogicalOrExpression(ctx.logicalOrExpression()); // Expresión ternaria
+        if(ctx.Question() != null && ctx.Colon() != null){
+            MemoryVariable condition = (MemoryVariable) this.visitLogicalOrExpression(ctx.logicalOrExpression());
+            if(condition.getValueBoolean()){
+                return this.visitExpression(ctx.expression());
+            }else{
+                return this.visitAssignmentExpression(ctx.assignmentExpression());
+            }
+        }
+        if(ctx.logicalOrExpression() != null){
+            return this.visitLogicalOrExpression(ctx.logicalOrExpression());
+        }
+
+        return null;
     }
 
     @Override
@@ -434,8 +446,24 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitShiftExpression(CPP14Parser.ShiftExpressionContext ctx) {
-        return this.visitAdditiveExpression(ctx.additiveExpression().get(0));
-        //cin, cout;
+        ctx.shiftOperator();
+        String initialValue = ctx.additiveExpression(0).getText();
+        if(initialValue.contains("cin")){
+            for(CPP14Parser.ShiftOperatorContext op : ctx.shiftOperator()){
+                if(!op.getText().equals(">>")){
+                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.INPUT_OUTPUT, "Las operaciones de entrada deben realizarse con el operador >>."));
+                    break;
+                }
+            }
+        }else if(initialValue.contains("cout")){
+            for(CPP14Parser.ShiftOperatorContext op : ctx.shiftOperator()){
+                if(!op.getText().equals("<<")){
+                    this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.INPUT_OUTPUT, "Las operaciones de salida deben realizarse con el operador <<."));
+                    break;
+                }
+            }
+        }
+        return null;
     }
 
     @Override
