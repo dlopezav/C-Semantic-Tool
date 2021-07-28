@@ -195,7 +195,8 @@ export default {
         "variables": this.vars
       };
       this.detectedErrors = [];
-      axios.post('https://cpp-semantic-tool.azurewebsites.net/evaluate', request)
+      this.synErrors = [];
+      axios.post('localhost:9000/evaluate', request)
         .then(function(response){
           let semanticErrors = response.data;
           if(semanticErrors.length > 0){

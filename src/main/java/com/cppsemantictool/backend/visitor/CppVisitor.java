@@ -8,10 +8,7 @@ import com.cppsemantictool.backend.model.Variable;
 import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     private HashMap<String, Pair<MemoryVariable, MemoryVariable>> variables;
@@ -130,7 +127,26 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
     }
 
     @Override
+    public T visitStatement(CPP14Parser.StatementContext ctx) {
+        if(ctx.declarationStatement()!=null) {
+            return this.visitDeclarationStatement(ctx.declarationStatement());
+        }
+        return null;
+    }
+
+    @Override
+    public T visitDeclarationStatement(CPP14Parser.DeclarationStatementContext ctx) {
+        return this.visitBlockDeclaration(ctx.blockDeclaration());
+    }
+
+    @Override
+    public T visitBlockDeclaration(CPP14Parser.BlockDeclarationContext ctx) {
+        return this.visitSimpleDeclaration(ctx.simpleDeclaration());
+    }
+
+    @Override
     public T visitSimpleDeclaration(CPP14Parser.SimpleDeclarationContext ctx) {
+        List<String> declarations = new ArrayList<String>();
         String type = null;
         if(ctx.declSpecifierSeq() != null){
             type = ctx.declSpecifierSeq().getText();
@@ -139,7 +155,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                 for(CPP14Parser.InitDeclaratorContext var : vars){
                     MemoryVariable value = (MemoryVariable) this.visitInitializer(var.initializer());
                     if(value != null) {
-                        if (type.equals("int")) {
+                        if (type.equals("int") || type.equals("long") || type.equals("long int")) {
                             if (value.getRepresentation() != MemoryVariable.NumberType.INTEGER) {
                                 this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "La variable (" + var.declarator().getText() + ") puede perder precisión. No coincide el tipo de dato con el dato."));
                             } else if (value.getMemorySize() != MemoryVariable.ByteSize.BITS_32) {
@@ -159,12 +175,24 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                             } else if (value.getMemorySize() != MemoryVariable.ByteSize.BITS_32) {
                                 this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "La variable (" + var.declarator().getText() + ") es más pequeña o más grande que su tipo de dato."));
                             }
-                        } else if (type.equals("long")) {
+                        } else if (type.equals("double")) {
+                            if (value.getRepresentation() != MemoryVariable.NumberType.FLOATING) {
+                                this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "La variable (" + var.declarator().getText() + ") puede perder precisión. No coincide el tipo de dato con el dato."));
+                            } else if (value.getMemorySize() != MemoryVariable.ByteSize.BITS_64) {
+                                this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "La variable (" + var.declarator().getText() + ") es más pequeña o más grande que su tipo de dato."));
+                            }
 
+                        }else if (type.equals("long long") ) {
+                            if (value.getRepresentation() != MemoryVariable.NumberType.INTEGER) {
+                                this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "La variable (" + var.declarator().getText() + ") puede perder precisión. No coincide el tipo de dato con el dato."));
+                            } else if (value.getMemorySize() != MemoryVariable.ByteSize.BITS_64) {
+                                this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CASTING, "La variable (" + var.declarator().getText() + ") es más pequeña o más grande que su tipo de dato."));
+                            }
 
                         }
                     }
-                    var.declarator(); // este retornaría el nombre de la variable
+                    // este retornaría el nombre de la variable
+                    declarations.add(var.declarator().getText());
                      // Este retornaría el memoryvariable
                     this.variables.put(type, new Pair<>(new MemoryVariable(0), new MemoryVariable(0)));
                 }
@@ -172,7 +200,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
             }
         }
         //TODO: Errores de casting en asignaciones y declaraciones tipos diferentes detectados
-        return null;
+        return (T) declarations;
     }
 
 
@@ -204,7 +232,10 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitInitializer(CPP14Parser.InitializerContext ctx) {
-        return this.visitBraceOrEqualInitializer(ctx.braceOrEqualInitializer());
+        if(ctx != null && ctx.braceOrEqualInitializer()!=null) {
+            return this.visitBraceOrEqualInitializer(ctx.braceOrEqualInitializer());
+        }
+        return null;
     }
 
     @Override
