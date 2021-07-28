@@ -58,7 +58,7 @@
     <b-container class="mb-5">
       <b-row v-if="detectedErrors">
         <b-col v-for="(error, index) in detectedErrors" :key="index" xl="3" md="3" sm="6" class="pr-4">
-          <b-card :title="error.type" img-width="370rm" title-text-variant="secondary">
+          <b-card :title="error.type" img-width="370rm" title-text-variant="secondary" class="mb-3">
             <p>{{error.message}}</p>
             <b-row>
               <b-col md="6" sm="6">
