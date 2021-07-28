@@ -258,6 +258,13 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                 }
 
             }
+        }else{
+            if(ctx.initDeclaratorList() != null){
+                List<CPP14Parser.InitDeclaratorContext> vars = ctx.initDeclaratorList().initDeclarator();
+                MemoryVariable newMax = (MemoryVariable) this.visitInitializer(vars.get(0).initializer());
+                MemoryVariable newMin = variables.get(vars.get(0).declarator().getText()).a;
+                this.variables.put(vars.get(0).declarator().getText(),new Pair<>(newMin,newMax));
+            }
         }
         //TODO: Errores de casting en asignaciones y declaraciones tipos diferentes detectados
         return (T) declarations;
@@ -267,7 +274,6 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitDeclarator(CPP14Parser.DeclaratorContext ctx) {
-        String a= ctx.pointerDeclarator().getText();
         return this.visitPointerDeclarator(ctx.pointerDeclarator());
     }
 
@@ -282,9 +288,9 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
         if(ctx.declaratorid() != null) {
             return this.visitDeclaratorid(ctx.declaratorid());
         }
-        String arrayName = ctx.noPointerDeclarator().getText();
-        MemoryVariable size = (MemoryVariable) this.visitConstantExpression(ctx.constantExpression());
-        this.arrays.put(arrayName, size.getValueInt());
+        //String arrayName = ctx.noPointerDeclarator().getText();
+        //MemoryVariable size = (MemoryVariable) this.visitConstantExpression(ctx.constantExpression());
+        //this.arrays.put(arrayName, size.getValueInt());
         return null;
     }
 
@@ -326,7 +332,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitConstantExpression(CPP14Parser.ConstantExpressionContext ctx) {
-        if(ctx.conditionalExpression() != null){
+        if(ctx!= null && ctx.conditionalExpression() != null){
             return this.visitConditionalExpression(ctx.conditionalExpression());
         }
         return null;
@@ -463,7 +469,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                 }
             }
         }
-        return null;
+        return this.visitAdditiveExpression(ctx.additiveExpression(0));
     }
 
     @Override
