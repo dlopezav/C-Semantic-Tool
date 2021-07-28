@@ -164,7 +164,9 @@ export default {
       if (!this.checkFormValidity()) {
         return;
       }
-      this.vars.push(this.newVar);
+      let copy = Object.assign({}, this.newVar);
+      this.vars.push(copy);
+      console.log(this.vars);
       this.$nextTick(() => {
         this.$bvModal.hide('var-modal');
       });
