@@ -205,6 +205,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitStatement(CPP14Parser.StatementContext ctx) {
+        String s = ctx.getText();
         if(ctx.declarationStatement()!=null) {
             return this.visitDeclarationStatement(ctx.declarationStatement());
         }else if(ctx.expressionStatement() != null){
@@ -215,7 +216,7 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitSimpleDeclaration(CPP14Parser.SimpleDeclarationContext ctx) {
-        List<String> declarations = new ArrayList<String>();
+        List<String> declarations = new ArrayList<>();
         String type = null;
         if(ctx.declSpecifierSeq() != null){
             type = ctx.declSpecifierSeq().getText();
@@ -259,9 +260,13 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
                             }
 
                         }
+                    }else if(var.declarator().getText().contains("[") && var.declarator().getText().contains("]")){
+                        this.arrays.put(var.declarator().pointerDeclarator().noPointerDeclarator().noPointerDeclarator().getText(), Integer.parseInt(var.declarator().pointerDeclarator().noPointerDeclarator().constantExpression().getText()));
+                    }else{
+                        declarations.add(var.declarator().getText());
+                        this.variables.put(type, new Pair<>(new MemoryVariable(0), new MemoryVariable(0)));
                     }
-                    declarations.add(var.declarator().getText());
-                    this.variables.put(type, new Pair<>(new MemoryVariable(0), new MemoryVariable(0)));
+
                 }
 
             }
@@ -269,12 +274,15 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
             if(ctx.initDeclaratorList() != null){
                 List<CPP14Parser.InitDeclaratorContext> vars = ctx.initDeclaratorList().initDeclarator();
                 MemoryVariable newMax = (MemoryVariable) this.visitInitializer(vars.get(0).initializer());
-                MemoryVariable newMin = variables.get(vars.get(0).declarator().getText()).a;
-                this.variables.put(vars.get(0).declarator().getText(),new Pair<>(newMin,newMax));
+                if(this.variables.containsKey(vars.get(0).declarator().getText())) {
+                    MemoryVariable newMin = variables.get(vars.get(0).declarator().getText()).a;
+                    this.variables.put(vars.get(0).declarator().getText(), new Pair<>(newMin, newMax));
+                }else if(vars.get(0).declarator().getText().contains("[") && vars.get(0).declarator().getText().contains("]")){
+                    this.visitDeclarator(vars.get(0).declarator());
+                }
             }
             return null;
         }
-        //TODO: Errores de casting en asignaciones y declaraciones tipos diferentes detectados
         return (T) declarations;
     }
 
@@ -300,16 +308,17 @@ public class CppVisitor <T> extends CPP14ParserBaseVisitor<T> {
 
     @Override
     public T visitNoPointerDeclarator(CPP14Parser.NoPointerDeclaratorContext ctx) {
-        if(ctx.declaratorid() != null) {
+        if(ctx.constantExpression() != null){
+            String name = ctx.noPointerDeclarator().getText();
+            int index = Integer.parseInt(ctx.constantExpression().getText());
+            if(this.arrays.get(name) <= index){
+                this.detectedErrors.add(new SemanticError(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine() + 1, SemanticError.ErrorType.CORE_DUMP, "Se está accediendo a una posición no reservada del arreglo."));
+            }
+        }else if(ctx.declaratorid() != null) {
             return this.visitDeclaratorid(ctx.declaratorid());
+        }else if(ctx.parametersAndQualifiers() != null){
+            return super.visitParametersAndQualifiers(ctx.parametersAndQualifiers());
         }
-        /*String arrayName = ctx.noPointerDeclarator().getText();
-        if(arrayName.contains("[") && arrayName.contains("]")){
-            MemoryVariable size = (MemoryVariable) this.visitConstantExpression(ctx.constantExpression());
-            this.arrays.put(arrayName, size.getValueInt());
-        }else{
-            return null;
-        }*/
         return null;
     }
 
